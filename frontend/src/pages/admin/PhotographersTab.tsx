@@ -19,6 +19,7 @@ export default function PhotographersTab({ contestId, contest }: Props) {
   const [uploadFor, setUploadFor] = useState<{ photographerId: number; topicId: number } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
 
   async function copyLink(token: string) {
@@ -203,10 +204,24 @@ export default function PhotographersTab({ contestId, contest }: Props) {
         className="hidden"
         onChange={e => {
           const file = e.target.files?.[0]
-          if (file) handleUpload(file)
+          if (!file) return
+          if (file.size > 20 * 1024 * 1024) {
+            setUploadError(`File is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 20 MB.`)
+            e.target.value = ''
+            return
+          }
+          setUploadError(null)
+          handleUpload(file)
           e.target.value = ''
         }}
       />
+
+      {uploadError && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-red-600 text-white text-sm px-4 py-3 rounded-xl shadow-lg z-50 flex items-center gap-3">
+          {uploadError}
+          <button onClick={() => setUploadError(null)} className="text-red-200 hover:text-white font-bold">✕</button>
+        </div>
+      )}
 
       {uploading && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
