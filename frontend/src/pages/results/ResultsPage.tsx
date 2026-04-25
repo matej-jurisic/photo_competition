@@ -24,7 +24,9 @@ export default function ResultsPage() {
     </div>
   )
 
-  const isEnded = new Date(results.contest.endDate) < new Date()
+  const now = new Date()
+  const uploadEnded = now > new Date(results.contest.uploadEndDate)
+  const ratingEnded = now > new Date(results.contest.ratingEndDate)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,7 +40,11 @@ export default function ResultsPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{results.contest.name} — Results</h1>
             <p className="text-sm text-gray-500 mt-0.5">
-              {isEnded ? 'Contest ended' : `Ends ${new Date(results.contest.endDate).toLocaleDateString()}`}
+              {ratingEnded
+                ? 'Contest ended'
+                : uploadEnded
+                  ? `Rating open · closes ${new Date(results.contest.ratingEndDate).toLocaleDateString()}`
+                  : `Uploads until ${new Date(results.contest.uploadEndDate).toLocaleDateString()}`}
             </p>
           </div>
         </div>

@@ -39,42 +39,46 @@ export default function ContestList() {
 
       <div className="grid gap-3">
         {contests?.map(c => {
-          const ended = new Date(c.endDate) < new Date()
+          const now = new Date()
+          const uploadEnded = now > new Date(c.uploadEndDate)
+          const ratingEnded = now > new Date(c.ratingEndDate)
+          const phase = ratingEnded ? 'ended' : uploadEnded ? 'rating' : 'upload'
           return (
-            <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-3 min-w-0">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900">{c.name}</span>
-                  {ended
-                    ? <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Ended</span>
-                    : <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Active</span>
-                  }
+            <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                  <span className="font-semibold text-gray-900 truncate">{c.name}</span>
+                  {phase === 'ended' && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full whitespace-nowrap">Ended</span>}
+                  {phase === 'rating' && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">Rating open</span>}
+                  {phase === 'upload' && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full whitespace-nowrap">Upload open</span>}
                 </div>
-                {c.description && <p className="text-sm text-gray-500 mt-0.5 truncate">{c.description}</p>}
-                <p className="text-xs text-gray-400 mt-1">
-                  End: {new Date(c.endDate).toLocaleDateString()}
-                </p>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => {
+                      if (confirm('Delete this contest and all its data?')) del.mutate(c.id)
+                    }}
+                    className="p-1.5 text-gray-400 hover:text-red-500 rounded"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                  <Link
+                    to={`/admin/contests/${c.id}`}
+                    className="p-1.5 text-gray-400 hover:text-gray-700 rounded"
+                  >
+                    <ChevronRight size={18} />
+                  </Link>
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
+              {c.description && <p className="text-sm text-gray-500 mt-1 truncate">{c.description}</p>}
+              <div className="flex items-center justify-between mt-1 gap-2">
+                <p className="text-xs text-gray-400">
+                  Uploads until {new Date(c.uploadEndDate).toLocaleDateString()} · Ratings until {new Date(c.ratingEndDate).toLocaleDateString()}
+                </p>
                 <Link
                   to={`/results/${c.id}`}
-                  className="text-xs text-indigo-600 hover:underline"
+                  className="text-xs text-indigo-600 hover:underline flex-shrink-0"
                 >
                   Results
-                </Link>
-                <button
-                  onClick={() => {
-                    if (confirm('Delete this contest and all its data?')) del.mutate(c.id)
-                  }}
-                  className="p-1.5 text-gray-400 hover:text-red-500 rounded"
-                >
-                  <Trash2 size={15} />
-                </button>
-                <Link
-                  to={`/admin/contests/${c.id}`}
-                  className="p-1.5 text-gray-400 hover:text-gray-700 rounded"
-                >
-                  <ChevronRight size={18} />
                 </Link>
               </div>
             </div>

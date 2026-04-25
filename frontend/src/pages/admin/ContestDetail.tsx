@@ -22,7 +22,10 @@ export default function ContestDetail() {
   if (isLoading) return <p className="text-gray-500">Loading...</p>
   if (error || !contest) return <p className="text-red-500">Failed to load contest.</p>
 
-  const ended = new Date(contest.endDate) < new Date()
+  const now = new Date()
+  const uploadEnded = now > new Date(contest.uploadEndDate)
+  const ratingEnded = now > new Date(contest.ratingEndDate)
+  const phase = ratingEnded ? 'ended' : uploadEnded ? 'rating' : 'upload'
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'photographers', label: 'Photographers', icon: <Image size={15} /> },
@@ -42,17 +45,16 @@ export default function ContestDetail() {
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-2xl font-bold text-gray-900">{contest.name}</h1>
-            {ended
-              ? <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Ended</span>
-              : <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Active</span>
-            }
+            {phase === 'ended' && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Ended</span>}
+            {phase === 'rating' && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">Rating open</span>}
+            {phase === 'upload' && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Upload open</span>}
           </div>
           {contest.description && <p className="text-sm text-gray-500 mt-1">{contest.description}</p>}
           {contest.reward && (
             <p className="text-sm text-indigo-600 mt-1">Reward: {contest.reward}</p>
           )}
           <p className="text-xs text-gray-400 mt-1">
-            End: {new Date(contest.endDate).toLocaleDateString()}
+            Uploads until {new Date(contest.uploadEndDate).toLocaleDateString()} · Ratings until {new Date(contest.ratingEndDate).toLocaleDateString()}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">

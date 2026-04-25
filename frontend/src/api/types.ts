@@ -3,7 +3,8 @@ export interface Contest {
   name: string
   description: string | null
   reward: string | null
-  endDate: string
+  uploadEndDate: string
+  ratingEndDate: string
   createdAt: string
 }
 

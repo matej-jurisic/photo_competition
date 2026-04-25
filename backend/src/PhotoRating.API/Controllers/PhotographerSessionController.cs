@@ -22,7 +22,7 @@ public class PhotographerSessionController(AppDbContext db, IConfiguration confi
         return new PhotographerSessionDto(
             new PhotographerWithPhotosDto(p.Id, p.Name, p.Bio, p.ContestId, p.Token,
                 p.Photos.Select(ph => new PhotoDto(ph.Id, ph.Title, ph.ImageUrl, ph.PhotographerId, ph.TopicId)).ToList()),
-            new ContestDto(p.Contest.Id, p.Contest.Name, p.Contest.Description, p.Contest.EndDate, p.Contest.CreatedAt, p.Contest.Reward),
+            new ContestDto(p.Contest.Id, p.Contest.Name, p.Contest.Description, p.Contest.UploadEndDate, p.Contest.RatingEndDate, p.Contest.CreatedAt, p.Contest.Reward),
             p.Contest.Topics.OrderBy(t => t.OrderIndex).Select(t => new TopicDto(t.Id, t.Name, t.ContestId, t.OrderIndex)).ToList()
         );
     }
@@ -36,7 +36,7 @@ public class PhotographerSessionController(AppDbContext db, IConfiguration confi
             .FirstOrDefaultAsync(p => p.Token == token);
 
         if (p is null) return NotFound();
-        if (DateTime.UtcNow > p.Contest.EndDate) return BadRequest("Contest has ended.");
+        if (DateTime.UtcNow > p.Contest.UploadEndDate) return BadRequest("Upload period has ended.");
         if (!await db.Topics.AnyAsync(t => t.Id == topicId && t.ContestId == p.ContestId))
             return BadRequest("Topic not found in this contest.");
 

@@ -63,7 +63,7 @@ public class ResultsController(AppDbContext db) : ControllerBase
         else if (withRatings.Count == 1)
             winner = withRatings[0].Photographer;
 
-        var contestDto = new ContestDto(contest.Id, contest.Name, contest.Description, contest.EndDate, contest.CreatedAt, contest.Reward);
+        var contestDto = new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Reward);
         var winnerDto = winner is null ? null : new PhotographerDto(winner.Id, winner.Name, winner.Bio, winner.ContestId, winner.Token);
 
         return new ContestResultsDto(contestDto, topicResults, winnerDto);

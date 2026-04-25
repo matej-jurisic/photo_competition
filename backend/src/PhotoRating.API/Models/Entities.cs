@@ -6,7 +6,8 @@ public class Contest
     public string Name { get; set; } = "";
     public string? Description { get; set; }
     public string? Reward { get; set; }
-    public DateTime EndDate { get; set; }
+    public DateTime UploadEndDate { get; set; }
+    public DateTime RatingEndDate { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<Photographer> Photographers { get; set; } = [];

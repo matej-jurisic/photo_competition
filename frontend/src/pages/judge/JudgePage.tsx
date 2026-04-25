@@ -56,7 +56,9 @@ export default function JudgePage() {
   )
 
   const contest = session.contest
-  const isEnded = new Date(contest.endDate) < new Date()
+  const now = new Date()
+  const isNotYetOpen = now < new Date(contest.uploadEndDate)
+  const isEnded = now > new Date(contest.ratingEndDate)
   const BASE = import.meta.env.VITE_API_URL ?? ''
 
   const totalPhotos = contest.photographers.reduce((s, p) => s + p.photos.length, 0)
@@ -80,7 +82,7 @@ export default function JudgePage() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-500">{ratedCount}/{totalPhotos} rated</span>
-            {!isEnded && (
+            {!isEnded && !isNotYetOpen && (
               <button
                 onClick={() => submit.mutate()}
                 disabled={submit.isPending || ratedCount === 0}
@@ -98,6 +100,12 @@ export default function JudgePage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-8">
+        {isNotYetOpen && (
+          <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-800 rounded-xl p-4 text-sm">
+            Rating opens after the upload deadline on {new Date(contest.uploadEndDate).toLocaleDateString()}.
+          </div>
+        )}
+
         {isEnded && (
           <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm">
             This contest has ended. Ratings are now closed.
@@ -153,7 +161,7 @@ export default function JudgePage() {
                                   {[1,2,3,4,5,6,7,8,9,10].map(score => (
                                     <button
                                       key={score}
-                                      disabled={isEnded}
+                                      disabled={isEnded || isNotYetOpen}
                                       onClick={() => setRating(photo.id, score, r?.comment ?? '')}
                                       className={`w-7 h-7 rounded text-xs font-medium transition-colors disabled:cursor-not-allowed ${
                                         r?.score === score
@@ -169,7 +177,7 @@ export default function JudgePage() {
                                 </div>
                                 <input
                                   type="text"
-                                  disabled={isEnded}
+                                  disabled={isEnded || isNotYetOpen}
                                   placeholder="Comment (optional)"
                                   value={r?.comment ?? ''}
                                   onChange={e => setRating(photo.id, r?.score ?? 0, e.target.value)}
@@ -188,7 +196,7 @@ export default function JudgePage() {
           )
         })}
 
-        {!isEnded && ratedCount > 0 && (
+        {!isEnded && !isNotYetOpen && ratedCount > 0 && (
           <div className="fixed bottom-6 right-6">
             <button
               onClick={() => submit.mutate()}

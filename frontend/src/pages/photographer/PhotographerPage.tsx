@@ -56,7 +56,7 @@ export default function PhotographerPage() {
     </div>
   )
 
-  const isEnded = new Date(session.contest.endDate) < new Date()
+  const isEnded = new Date() > new Date(session.contest.uploadEndDate)
   const BASE = import.meta.env.VITE_API_URL ?? ''
 
   return (
@@ -69,7 +69,7 @@ export default function PhotographerPage() {
             <p className="text-xs text-gray-500">{session.photographer.name}</p>
           </div>
           {isEnded && (
-            <span className="ml-auto text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Contest ended</span>
+            <span className="ml-auto text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Uploads closed</span>
           )}
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function PhotographerPage() {
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-4">
         {isEnded && (
           <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm">
-            This contest has ended. You can no longer upload or change photos.
+            The upload deadline has passed. You can no longer upload or change photos.
           </div>
         )}
 

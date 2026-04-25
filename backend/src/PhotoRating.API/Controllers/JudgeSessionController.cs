@@ -27,7 +27,7 @@ public class JudgeSessionController(AppDbContext db) : ControllerBase
 
         var contest = judge.Contest;
         var contestDto = new ContestDetailDto(
-            contest.Id, contest.Name, contest.Description, contest.EndDate, contest.CreatedAt, contest.Reward,
+            contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Reward,
             contest.Photographers.Select(p => new PhotographerWithPhotosDto(
                 p.Id, p.Name, p.Bio, p.ContestId, p.Token,
                 p.Photos.Select(ph => new PhotoDto(ph.Id, ph.Title, ph.ImageUrl, ph.PhotographerId, ph.TopicId)).ToList()
@@ -55,7 +55,9 @@ public class JudgeSessionController(AppDbContext db) : ControllerBase
 
         if (judge is null) return NotFound();
 
-        if (DateTime.UtcNow > judge.Contest!.EndDate)
+        if (DateTime.UtcNow < judge.Contest!.UploadEndDate)
+            return BadRequest("Rating period has not started yet.");
+        if (DateTime.UtcNow > judge.Contest!.RatingEndDate)
             return BadRequest("Contest has ended, ratings are closed.");
 
         foreach (var item in dto.Ratings)
