@@ -48,6 +48,9 @@ export default function ContestDetail() {
             }
           </div>
           {contest.description && <p className="text-sm text-gray-500 mt-1">{contest.description}</p>}
+          {contest.reward && (
+            <p className="text-sm text-indigo-600 mt-1">Reward: {contest.reward}</p>
+          )}
           <p className="text-xs text-gray-400 mt-1">
             End: {new Date(contest.endDate).toLocaleDateString()}
           </p>

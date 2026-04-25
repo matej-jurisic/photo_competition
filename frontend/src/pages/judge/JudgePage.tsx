@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { Camera, Star, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Camera, Star, CheckCircle, AlertTriangle, Gift } from 'lucide-react'
 import { api } from '../../api/client'
 import type { Topic } from '../../api/types'
 
@@ -101,6 +101,16 @@ export default function JudgePage() {
         {isEnded && (
           <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm">
             This contest has ended. Ratings are now closed.
+          </div>
+        )}
+
+        {contest.reward && (
+          <div className="mb-6 bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center gap-3">
+            <Gift size={18} className="text-indigo-500 flex-shrink-0" />
+            <div>
+              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Reward</span>
+              <p className="text-sm text-indigo-900 mt-0.5">{contest.reward}</p>
+            </div>
           </div>
         )}
 

@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Trophy, ArrowLeft, Star } from 'lucide-react'
+import { Trophy, ArrowLeft, Star, Gift } from 'lucide-react'
 import { api } from '../../api/client'
 import type { PhotographerScore } from '../../api/types'
 
@@ -42,6 +42,17 @@ export default function ResultsPage() {
             </p>
           </div>
         </div>
+
+        {/* Reward */}
+        {results.contest.reward && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5 mb-6 flex items-center gap-4">
+            <Gift size={28} className="text-indigo-500 flex-shrink-0" />
+            <div>
+              <div className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1">Reward</div>
+              <div className="text-lg font-semibold text-indigo-900">{results.contest.reward}</div>
+            </div>
+          </div>
+        )}
 
         {/* Overall winner / tie */}
         {(() => {

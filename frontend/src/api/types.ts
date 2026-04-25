@@ -2,6 +2,7 @@ export interface Contest {
   id: number
   name: string
   description: string | null
+  reward: string | null
   endDate: string
   createdAt: string
 }

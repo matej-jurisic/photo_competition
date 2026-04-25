@@ -22,7 +22,7 @@ public class PhotographerSessionController(AppDbContext db, IConfiguration confi
         return new PhotographerSessionDto(
             new PhotographerWithPhotosDto(p.Id, p.Name, p.Bio, p.ContestId, p.Token,
                 p.Photos.Select(ph => new PhotoDto(ph.Id, ph.Title, ph.ImageUrl, ph.PhotographerId, ph.TopicId)).ToList()),
-            new ContestDto(p.Contest.Id, p.Contest.Name, p.Contest.Description, p.Contest.EndDate, p.Contest.CreatedAt),
+            new ContestDto(p.Contest.Id, p.Contest.Name, p.Contest.Description, p.Contest.EndDate, p.Contest.CreatedAt, p.Contest.Reward),
             p.Contest.Topics.OrderBy(t => t.OrderIndex).Select(t => new TopicDto(t.Id, t.Name, t.ContestId, t.OrderIndex)).ToList()
         );
     }

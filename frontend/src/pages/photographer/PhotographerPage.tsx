@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Camera, Upload, X, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Camera, Upload, X, AlertTriangle, CheckCircle, Gift } from 'lucide-react'
 import { api } from '../../api/client'
 
 export default function PhotographerPage() {
@@ -78,6 +78,16 @@ export default function PhotographerPage() {
         {isEnded && (
           <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm">
             This contest has ended. You can no longer upload or change photos.
+          </div>
+        )}
+
+        {session.contest.reward && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center gap-3">
+            <Gift size={18} className="text-indigo-500 flex-shrink-0" />
+            <div>
+              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Reward</span>
+              <p className="text-sm text-indigo-900 mt-0.5">{session.contest.reward}</p>
+            </div>
           </div>
         )}
 

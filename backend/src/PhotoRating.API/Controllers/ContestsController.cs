@@ -15,7 +15,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
     public async Task<List<ContestDto>> GetAll() =>
         await db.Contests
             .OrderByDescending(c => c.CreatedAt)
-            .Select(c => new ContestDto(c.Id, c.Name, c.Description, c.EndDate, c.CreatedAt))
+            .Select(c => new ContestDto(c.Id, c.Name, c.Description, c.EndDate, c.CreatedAt, c.Reward))
             .ToListAsync();
 
     [HttpGet("{id}")]
@@ -34,11 +34,11 @@ public class ContestsController(AppDbContext db) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ContestDto>> Create(CreateContestDto dto)
     {
-        var contest = new Contest { Name = dto.Name, Description = dto.Description, EndDate = dto.EndDate };
+        var contest = new Contest { Name = dto.Name, Description = dto.Description, EndDate = dto.EndDate, Reward = dto.Reward };
         db.Contests.Add(contest);
         await db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetById), new { id = contest.Id },
-            new ContestDto(contest.Id, contest.Name, contest.Description, contest.EndDate, contest.CreatedAt));
+            new ContestDto(contest.Id, contest.Name, contest.Description, contest.EndDate, contest.CreatedAt, contest.Reward));
     }
 
     [HttpPut("{id}")]
@@ -50,8 +50,9 @@ public class ContestsController(AppDbContext db) : ControllerBase
         contest.Name = dto.Name;
         contest.Description = dto.Description;
         contest.EndDate = dto.EndDate;
+        contest.Reward = dto.Reward;
         await db.SaveChangesAsync();
-        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.EndDate, contest.CreatedAt);
+        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.EndDate, contest.CreatedAt, contest.Reward);
     }
 
     [HttpDelete("{id}")]
@@ -65,7 +66,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
     }
 
     private static ContestDetailDto ToDetail(Contest c) => new(
-        c.Id, c.Name, c.Description, c.EndDate, c.CreatedAt,
+        c.Id, c.Name, c.Description, c.EndDate, c.CreatedAt, c.Reward,
         c.Photographers.Select(p => new PhotographerWithPhotosDto(
             p.Id, p.Name, p.Bio, p.ContestId, p.Token,
             p.Photos.Select(ph => new PhotoDto(ph.Id, ph.Title, ph.ImageUrl, ph.PhotographerId, ph.TopicId)).ToList()

@@ -1,11 +1,11 @@
 namespace PhotoRating.API.Models;
 
 // Contest
-public record CreateContestDto(string Name, string? Description, DateTime EndDate);
-public record UpdateContestDto(string Name, string? Description, DateTime EndDate);
-public record ContestDto(int Id, string Name, string? Description, DateTime EndDate, DateTime CreatedAt);
+public record CreateContestDto(string Name, string? Description, DateTime EndDate, string? Reward);
+public record UpdateContestDto(string Name, string? Description, DateTime EndDate, string? Reward);
+public record ContestDto(int Id, string Name, string? Description, DateTime EndDate, DateTime CreatedAt, string? Reward);
 public record ContestDetailDto(
-    int Id, string Name, string? Description, DateTime EndDate, DateTime CreatedAt,
+    int Id, string Name, string? Description, DateTime EndDate, DateTime CreatedAt, string? Reward,
     List<PhotographerWithPhotosDto> Photographers,
     List<TopicDto> Topics,
     List<JudgeDto> Judges);

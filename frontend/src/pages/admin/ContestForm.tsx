@@ -12,6 +12,7 @@ export default function ContestForm() {
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [reward, setReward] = useState('')
   const [endDate, setEndDate] = useState('')
   const [error, setError] = useState('')
 
@@ -25,18 +26,19 @@ export default function ContestForm() {
     if (existing) {
       setName(existing.name)
       setDescription(existing.description ?? '')
+      setReward(existing.reward ?? '')
       setEndDate(existing.endDate.slice(0, 10))
     }
   }, [existing])
 
   const create = useMutation({
-    mutationFn: (d: { name: string; description: string; endDate: string }) => api.contests.create(d),
+    mutationFn: (d: { name: string; description: string; endDate: string; reward: string }) => api.contests.create(d),
     onSuccess: c => { qc.invalidateQueries({ queryKey: ['contests'] }); navigate(`/admin/contests/${c.id}`) },
     onError: () => setError('Failed to save. Check your admin key.'),
   })
 
   const update = useMutation({
-    mutationFn: (d: { name: string; description: string; endDate: string }) => api.contests.update(Number(id), d),
+    mutationFn: (d: { name: string; description: string; endDate: string; reward: string }) => api.contests.update(Number(id), d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['contests'] }); navigate(`/admin/contests/${id}`) },
     onError: () => setError('Failed to save.'),
   })
@@ -44,7 +46,7 @@ export default function ContestForm() {
   function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim() || !endDate) { setError('Name and end date are required.'); return }
-    const payload = { name: name.trim(), description: description.trim(), endDate: new Date(endDate).toISOString() }
+    const payload = { name: name.trim(), description: description.trim(), reward: reward.trim(), endDate: new Date(endDate).toISOString() }
     if (isEdit) update.mutate(payload)
     else create.mutate(payload)
   }
@@ -74,6 +76,15 @@ export default function ContestForm() {
             rows={3}
             value={description}
             onChange={e => setDescription(e.target.value)}
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium text-gray-700">Reward</span>
+          <input
+            className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g. Trophy + €200 voucher"
+            value={reward}
+            onChange={e => setReward(e.target.value)}
           />
         </label>
         <label className="block">

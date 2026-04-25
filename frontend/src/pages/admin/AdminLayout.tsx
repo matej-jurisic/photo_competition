@@ -53,7 +53,7 @@ export default function AdminLayout() {
       <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-3">
         <Camera className="text-indigo-600" size={22} />
         <span className="font-bold text-gray-900 text-lg">Photo Rating</span>
-        <nav className="ml-8 flex gap-1">
+        <nav className="flex gap-1">
           <NavLink
             to="/admin"
             end
