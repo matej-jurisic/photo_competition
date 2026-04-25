@@ -68,9 +68,12 @@ export default function PhotographerPage() {
             <h1 className="font-bold text-gray-900">{session.contest.name}</h1>
             <p className="text-xs text-gray-500">{session.photographer.name}</p>
           </div>
-          {isEnded && (
-            <span className="ml-auto text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Uploads closed</span>
-          )}
+          <div className="ml-auto text-right">
+            {isEnded
+              ? <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Uploads closed</span>
+              : <span className="text-xs text-gray-400">Upload deadline: {new Date(session.contest.uploadEndDate).toLocaleDateString()}</span>
+            }
+          </div>
         </div>
       </div>
 
@@ -81,15 +84,21 @@ export default function PhotographerPage() {
           </div>
         )}
 
-        {session.contest.reward && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center gap-3">
-            <Gift size={18} className="text-indigo-500 flex-shrink-0" />
-            <div>
-              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Reward</span>
-              <p className="text-sm text-indigo-900 mt-0.5">{session.contest.reward}</p>
+        <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+          {session.contest.description && (
+            <p className="text-sm text-gray-700">{session.contest.description}</p>
+          )}
+          {session.contest.reward && (
+            <div className="flex items-center gap-2">
+              <Gift size={15} className="text-indigo-500 flex-shrink-0" />
+              <span className="text-sm font-medium text-indigo-700">{session.contest.reward}</span>
             </div>
+          )}
+          <div className="flex flex-col gap-1 text-xs text-gray-400">
+            <span>Upload deadline: {new Date(session.contest.uploadEndDate).toLocaleDateString()}</span>
+            <span>Judging closes: {new Date(session.contest.ratingEndDate).toLocaleDateString()}</span>
           </div>
-        )}
+        </div>
 
         {session.topics.map(topic => {
           const photo = session.photographer.photos.find(ph => ph.topicId === topic.id)
