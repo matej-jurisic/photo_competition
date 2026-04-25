@@ -1,0 +1,43 @@
+namespace PhotoRating.API.Models;
+
+// Contest
+public record CreateContestDto(string Name, string? Description, DateTime EndDate);
+public record UpdateContestDto(string Name, string? Description, DateTime EndDate);
+public record ContestDto(int Id, string Name, string? Description, DateTime EndDate, DateTime CreatedAt);
+public record ContestDetailDto(
+    int Id, string Name, string? Description, DateTime EndDate, DateTime CreatedAt,
+    List<PhotographerWithPhotosDto> Photographers,
+    List<TopicDto> Topics,
+    List<JudgeDto> Judges);
+
+// Photographer
+public record CreatePhotographerDto(string Name, string? Bio);
+public record UpdatePhotographerDto(string Name, string? Bio);
+public record PhotographerDto(int Id, string Name, string? Bio, int ContestId);
+public record PhotographerWithPhotosDto(int Id, string Name, string? Bio, int ContestId, List<PhotoDto> Photos);
+
+// Topic
+public record CreateTopicDto(string Name, int OrderIndex);
+public record UpdateTopicDto(string Name, int OrderIndex);
+public record TopicDto(int Id, string Name, int ContestId, int OrderIndex);
+
+// Photo
+public record PhotoDto(int Id, string? Title, string ImageUrl, int PhotographerId, int TopicId);
+
+// Judge
+public record CreateJudgeDto(string Name, string? Email);
+public record UpdateJudgeDto(string Name, string? Email);
+public record JudgeDto(int Id, string Name, string? Email, Guid Token, int ContestId, DateTime CreatedAt);
+
+// Ratings
+public record UpsertRatingDto(int PhotoId, int Score, string? Comment);
+public record BulkUpsertRatingsDto(List<UpsertRatingDto> Ratings);
+public record RatingDto(int Id, int PhotoId, int Score, string? Comment, DateTime CreatedAt);
+
+// Judge session (public)
+public record JudgeSessionDto(JudgeDto Judge, ContestDetailDto Contest, List<RatingDto> ExistingRatings);
+
+// Results
+public record PhotographerScoreDto(PhotographerDto Photographer, double AverageScore, int TotalRatings, int TotalPhotos);
+public record TopicResultDto(TopicDto Topic, List<PhotographerScoreDto> Scores);
+public record ContestResultsDto(ContestDto Contest, List<TopicResultDto> Topics, PhotographerDto? Winner);

@@ -1,0 +1,100 @@
+# Build and binary directories
+bin/
+obj/
+out/
+
+# Visual Studio and Rider
+.vs/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+*.user
+*.userosscache
+*.pidb
+*.opendb
+*.VC.db
+*.VC.VC.opendb
+*.cachefile
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+log-*
+
+# Temporary files
+*.tmp
+*.tmp_proj
+*.bak
+*.sw?
+*.dbmdl
+*.pfx
+*.publishsettings
+.DS_Store
+
+# Test results and coverage
+[Tt]est[Rr]esult*/
+coverage/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+**/packages/
+!**/packages/build/
+
+# Build output
+artifacts/
+project.lock.json
+project.fragment.lock.json
+Generated\ Files/
+
+# ASP.NET Core
+appsettings*.json
+secrets.json
+ScaffoldingReadMe.txt
+
+# SQL Server local DB
+*.mdf
+*.ldf
+*.ndf
+
+# Node.js
+node_modules/
+dist/
+dist-ssr/
+.next/
+.build/
+.cache/
+.vite/
+.webpack/
+.eslintcache
+.parcel-cache/
+.turbo/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.localhistory/
+.history/
+.vscode/
+!.vscode/extensions.json
+
+# Uploaded photos (stored in Docker volume, not in repo)
+backend/uploads/
+
+# Claude
+.claude/
+CLAUDE.md
