@@ -159,7 +159,7 @@ export default function ResultsPage() {
 
                   {/* Full ranking */}
                   <div className="space-y-4">
-                    {sorted.map((s: PhotographerScore, i) => {
+                    {sorted.map((s: PhotographerScore) => {
                       const pct = topScore > 0 ? (s.averageScore / 10) * 100 : 0
                       const isCategoryWinner = isWinner(s)
 
