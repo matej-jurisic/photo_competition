@@ -68,12 +68,9 @@ export default function PhotographerPage() {
             <h1 className="font-bold text-gray-900">{session.contest.name}</h1>
             <p className="text-xs text-gray-500">{session.photographer.name}</p>
           </div>
-          <div className="ml-auto text-right">
-            {isEnded
-              ? <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Uploads closed</span>
-              : <span className="text-xs text-gray-400">Upload deadline: {new Date(session.contest.uploadEndDate).toLocaleDateString()}</span>
-            }
-          </div>
+          {isEnded && (
+            <span className="ml-auto text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Uploads closed</span>
+          )}
         </div>
       </div>
 
