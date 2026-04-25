@@ -56,7 +56,7 @@ export default function PhotographerPage() {
     </div>
   )
 
-  const isEnded = new Date() > new Date(session.contest.uploadEndDate)
+  const isEnded = session.contest.isCompleted || new Date() > new Date(session.contest.uploadEndDate)
   const BASE = import.meta.env.VITE_API_URL ?? ''
 
   return (

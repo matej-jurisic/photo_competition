@@ -42,12 +42,13 @@ export default function ContestList() {
           const now = new Date()
           const uploadEnded = now > new Date(c.uploadEndDate)
           const ratingEnded = now > new Date(c.ratingEndDate)
-          const phase = ratingEnded ? 'ended' : uploadEnded ? 'rating' : 'upload'
+          const phase = c.isCompleted ? 'completed' : ratingEnded ? 'ended' : uploadEnded ? 'rating' : 'upload'
           return (
             <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0 flex-wrap">
                   <span className="font-semibold text-gray-900 truncate">{c.name}</span>
+                  {phase === 'completed' && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full whitespace-nowrap">Completed</span>}
                   {phase === 'ended' && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full whitespace-nowrap">Ended</span>}
                   {phase === 'rating' && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">Rating open</span>}
                   {phase === 'upload' && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full whitespace-nowrap">Upload open</span>}

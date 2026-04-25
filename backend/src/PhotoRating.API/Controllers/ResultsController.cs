@@ -7,10 +7,10 @@ namespace PhotoRating.API.Controllers;
 
 [ApiController]
 [Route("api/contests/{contestId}/results")]
-public class ResultsController(AppDbContext db) : ControllerBase
+public class ResultsController(AppDbContext db, IConfiguration config) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<ContestResultsDto>> GetResults(int contestId)
+    public async Task<ActionResult<ContestResultsDto>> GetResults(int contestId, [FromHeader(Name = "X-Admin-Key")] string? adminKey)
     {
         var contest = await db.Contests
             .Include(c => c.Photographers)
@@ -19,6 +19,13 @@ public class ResultsController(AppDbContext db) : ControllerBase
             .FirstOrDefaultAsync(c => c.Id == contestId);
 
         if (contest is null) return NotFound();
+
+        if (!contest.IsCompleted && DateTime.UtcNow < contest.RatingEndDate)
+        {
+            var expected = config["AdminKey"];
+            if (string.IsNullOrEmpty(expected) || adminKey != expected)
+                return Unauthorized();
+        }
 
         var photos = await db.Photos
             .Where(p => p.Photographer.ContestId == contestId)
@@ -63,7 +70,7 @@ public class ResultsController(AppDbContext db) : ControllerBase
         else if (withRatings.Count == 1)
             winner = withRatings[0].Photographer;
 
-        var contestDto = new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Reward);
+        var contestDto = new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Reward, contest.IsCompleted);
         var winnerDto = winner is null ? null : new PhotographerDto(winner.Id, winner.Name, winner.Bio, winner.ContestId, winner.Token);
 
         return new ContestResultsDto(contestDto, topicResults, winnerDto);

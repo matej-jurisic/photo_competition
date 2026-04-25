@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Trophy, ArrowLeft, Star, Gift } from 'lucide-react'
+import { Trophy, ArrowLeft, Star, Gift, Lock } from 'lucide-react'
+import axios from 'axios'
 import { api } from '../../api/client'
 import type { PhotographerScore } from '../../api/types'
 
@@ -18,11 +19,24 @@ export default function ResultsPage() {
     </div>
   )
 
-  if (error || !results) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <p className="text-red-500">Failed to load results.</p>
-    </div>
-  )
+  if (error) {
+    const is401 = axios.isAxiosError(error) && error.response?.status === 401
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        {is401 ? (
+          <div className="text-center">
+            <Lock size={36} className="mx-auto text-gray-300 mb-3" />
+            <p className="text-gray-600 font-medium">Results are not yet available.</p>
+            <p className="text-sm text-gray-400 mt-1">Check back after the rating period ends.</p>
+          </div>
+        ) : (
+          <p className="text-red-500">Failed to load results.</p>
+        )}
+      </div>
+    )
+  }
+
+  if (!results) return null
 
   const now = new Date()
   const uploadEnded = now > new Date(results.contest.uploadEndDate)

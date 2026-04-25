@@ -31,7 +31,9 @@ export const api = {
     delete: (id: number) =>
       http.delete(`/api/contests/${id}`, { headers: adminHeaders() }),
     results: (id: number) =>
-      http.get<ContestResults>(`/api/contests/${id}/results`).then(r => r.data),
+      http.get<ContestResults>(`/api/contests/${id}/results`, { headers: adminHeaders() }).then(r => r.data),
+    setComplete: (id: number, isCompleted: boolean) =>
+      http.patch<Contest>(`/api/contests/${id}/complete`, { isCompleted }, { headers: adminHeaders() }).then(r => r.data),
   },
 
   photographers: {

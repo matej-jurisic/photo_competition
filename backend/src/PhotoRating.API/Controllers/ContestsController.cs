@@ -15,7 +15,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
     public async Task<List<ContestDto>> GetAll() =>
         await db.Contests
             .OrderByDescending(c => c.CreatedAt)
-            .Select(c => new ContestDto(c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Reward))
+            .Select(c => new ContestDto(c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Reward, c.IsCompleted))
             .ToListAsync();
 
     [HttpGet("{id}")]
@@ -38,7 +38,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
         db.Contests.Add(contest);
         await db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetById), new { id = contest.Id },
-            new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Reward));
+            new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Reward, contest.IsCompleted));
     }
 
     [HttpPut("{id}")]
@@ -53,7 +53,17 @@ public class ContestsController(AppDbContext db) : ControllerBase
         contest.RatingEndDate = dto.RatingEndDate;
         contest.Reward = dto.Reward;
         await db.SaveChangesAsync();
-        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Reward);
+        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Reward, contest.IsCompleted);
+    }
+
+    [HttpPatch("{id}/complete")]
+    public async Task<ActionResult<ContestDto>> SetComplete(int id, SetCompleteDto dto)
+    {
+        var contest = await db.Contests.FindAsync(id);
+        if (contest is null) return NotFound();
+        contest.IsCompleted = dto.IsCompleted;
+        await db.SaveChangesAsync();
+        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Reward, contest.IsCompleted);
     }
 
     [HttpDelete("{id}")]
@@ -67,7 +77,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
     }
 
     private static ContestDetailDto ToDetail(Contest c) => new(
-        c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Reward,
+        c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Reward, c.IsCompleted,
         c.Photographers.Select(p => new PhotographerWithPhotosDto(
             p.Id, p.Name, p.Bio, p.ContestId, p.Token,
             p.Photos.Select(ph => new PhotoDto(ph.Id, ph.Title, ph.ImageUrl, ph.PhotographerId, ph.TopicId)).ToList()

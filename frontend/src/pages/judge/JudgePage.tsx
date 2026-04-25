@@ -58,7 +58,7 @@ export default function JudgePage() {
   const contest = session.contest
   const now = new Date()
   const isNotYetOpen = now < new Date(contest.uploadEndDate)
-  const isEnded = now > new Date(contest.ratingEndDate)
+  const isEnded = contest.isCompleted || now > new Date(contest.ratingEndDate)
   const BASE = import.meta.env.VITE_API_URL ?? ''
 
   const totalPhotos = contest.photographers.reduce((s, p) => s + p.photos.length, 0)
@@ -135,14 +135,12 @@ export default function JudgePage() {
                   const photos = photographer.photos.filter(ph => ph.topicId === topic.id)
                   if (photos.length === 0) return (
                     <div key={photographer.id} className="bg-white rounded-xl border border-gray-200 p-4">
-                      <div className="font-semibold text-gray-700 mb-3">{photographer.name}</div>
                       <p className="text-sm text-gray-400">No photos uploaded yet.</p>
                     </div>
                   )
 
                   return (
                     <div key={photographer.id} className="bg-white rounded-xl border border-gray-200 p-4">
-                      <div className="font-semibold text-gray-800 mb-4">{photographer.name}</div>
                       <div className="space-y-5">
                         {photos.map(photo => {
                           const r = ratings[photo.id]

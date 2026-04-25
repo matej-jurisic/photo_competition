@@ -5,6 +5,7 @@ export interface Contest {
   reward: string | null
   uploadEndDate: string
   ratingEndDate: string
+  isCompleted: boolean
   createdAt: string
 }
 

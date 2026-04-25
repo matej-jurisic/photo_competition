@@ -60,7 +60,7 @@ export default function TopicsTab({ contestId }: { contestId: number }) {
             <GripVertical size={16} className="text-gray-300 flex-shrink-0" />
             <span className="text-xs text-gray-400 w-5">{i + 1}.</span>
             {editingId === t.id ? (
-              <>
+              <div className="flex-1 flex flex-col sm:flex-row gap-1.5">
                 <input
                   className="flex-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={editName}
@@ -68,9 +68,11 @@ export default function TopicsTab({ contestId }: { contestId: number }) {
                   onKeyDown={e => e.key === 'Enter' && update.mutate(t.id)}
                   autoFocus
                 />
-                <button onClick={() => update.mutate(t.id)} className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700">Save</button>
-                <button onClick={() => setEditingId(null)} className="text-xs text-gray-500 px-2 py-1 rounded hover:bg-gray-100">Cancel</button>
-              </>
+                <div className="flex gap-1.5">
+                  <button onClick={() => update.mutate(t.id)} className="flex-1 sm:flex-none text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700">Save</button>
+                  <button onClick={() => setEditingId(null)} className="flex-1 sm:flex-none text-xs text-gray-500 px-2 py-1 rounded hover:bg-gray-100">Cancel</button>
+                </div>
+              </div>
             ) : (
               <>
                 <span className="flex-1 text-sm font-medium text-gray-800">{t.name}</span>

@@ -128,7 +128,7 @@ export default function PhotographersTab({ contestId, contest }: Props) {
       {photographers?.map(p => (
         <div key={p.id} className="bg-white rounded-xl border border-gray-200 p-4">
           {editingId === p.id ? (
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
               <input
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={editName}
@@ -141,8 +141,10 @@ export default function PhotographersTab({ contestId, contest }: Props) {
                 value={editBio}
                 onChange={e => setEditBio(e.target.value)}
               />
-              <button onClick={() => update.mutate(p.id)} className="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">Save</button>
-              <button onClick={() => setEditingId(null)} className="text-sm text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-100">Cancel</button>
+              <div className="flex gap-2">
+                <button onClick={() => update.mutate(p.id)} className="flex-1 sm:flex-none text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">Save</button>
+                <button onClick={() => setEditingId(null)} className="flex-1 sm:flex-none text-sm text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-100">Cancel</button>
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2 mb-4">
