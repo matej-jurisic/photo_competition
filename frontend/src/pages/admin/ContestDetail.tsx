@@ -68,7 +68,7 @@ export default function ContestDetail() {
         </div>
       </div>
 
-      <div className="flex gap-1 border-b border-gray-200 mb-6 overflow-x-auto">
+      <div className="flex gap-1 border-b border-gray-200 mb-6 overflow-x-auto overflow-y-hidden">
         {tabs.map(t => (
           <button
             key={t.key}
