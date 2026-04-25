@@ -17,10 +17,17 @@ export interface Photographer {
   name: string
   bio: string | null
   contestId: number
+  token: string
 }
 
 export interface PhotographerWithPhotos extends Photographer {
   photos: Photo[]
+}
+
+export interface PhotographerSession {
+  photographer: PhotographerWithPhotos
+  contest: Contest
+  topics: Topic[]
 }
 
 export interface Topic {

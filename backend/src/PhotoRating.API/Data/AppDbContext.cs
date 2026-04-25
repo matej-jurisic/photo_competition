@@ -21,5 +21,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         model.Entity<Judge>()
             .HasIndex(j => j.Token)
             .IsUnique();
+
+        model.Entity<Photographer>()
+            .HasIndex(p => p.Token)
+            .IsUnique();
     }
 }

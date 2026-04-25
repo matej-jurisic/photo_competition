@@ -38,9 +38,9 @@ export default function ContestDetail() {
         </Link>
       </div>
 
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-2xl font-bold text-gray-900">{contest.name}</h1>
             {ended
               ? <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Ended</span>
@@ -52,7 +52,7 @@ export default function ContestDetail() {
             End: {new Date(contest.endDate).toLocaleDateString()}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Link
             to={`/results/${contestId}`}
             className="text-sm text-indigo-600 hover:underline"
@@ -68,7 +68,7 @@ export default function ContestDetail() {
         </div>
       </div>
 
-      <div className="flex gap-1 border-b border-gray-200 mb-6">
+      <div className="flex gap-1 border-b border-gray-200 mb-6 overflow-x-auto">
         {tabs.map(t => (
           <button
             key={t.key}

@@ -82,4 +82,15 @@ export const api = {
     submitRatings: (token: string, ratings: { photoId: number; score: number; comment: string }[]) =>
       http.post<Rating[]>(`/api/sessions/${token}/ratings`, { ratings }).then(r => r.data),
   },
+
+  photographerSession: {
+    get: (token: string) =>
+      http.get<import('./types').PhotographerSession>(`/api/photographer-sessions/${token}`).then(r => r.data),
+    upload: (token: string, data: FormData) =>
+      http.post<Photo>(`/api/photographer-sessions/${token}/photos`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }).then(r => r.data),
+    deletePhoto: (token: string, photoId: number) =>
+      http.delete(`/api/photographer-sessions/${token}/photos/${photoId}`),
+  },
 }

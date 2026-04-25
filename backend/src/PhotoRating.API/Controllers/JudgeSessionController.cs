@@ -29,7 +29,7 @@ public class JudgeSessionController(AppDbContext db) : ControllerBase
         var contestDto = new ContestDetailDto(
             contest.Id, contest.Name, contest.Description, contest.EndDate, contest.CreatedAt,
             contest.Photographers.Select(p => new PhotographerWithPhotosDto(
-                p.Id, p.Name, p.Bio, p.ContestId,
+                p.Id, p.Name, p.Bio, p.ContestId, p.Token,
                 p.Photos.Select(ph => new PhotoDto(ph.Id, ph.Title, ph.ImageUrl, ph.PhotographerId, ph.TopicId)).ToList()
             )).ToList(),
             contest.Topics.OrderBy(t => t.OrderIndex)

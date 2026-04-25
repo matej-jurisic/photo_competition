@@ -35,7 +35,7 @@ public class ResultsController(AppDbContext db) : ControllerBase
                     var photographerPhotos = topicPhotos.Where(p => p.PhotographerId == photographer.Id).ToList();
                     var allRatings = photographerPhotos.SelectMany(p => p.Ratings).ToList();
                     return new PhotographerScoreDto(
-                        new PhotographerDto(photographer.Id, photographer.Name, photographer.Bio, photographer.ContestId),
+                        new PhotographerDto(photographer.Id, photographer.Name, photographer.Bio, photographer.ContestId, photographer.Token),
                         allRatings.Count > 0 ? allRatings.Average(r => r.Score) : 0,
                         allRatings.Count,
                         photographerPhotos.Count
@@ -64,7 +64,7 @@ public class ResultsController(AppDbContext db) : ControllerBase
             winner = withRatings[0].Photographer;
 
         var contestDto = new ContestDto(contest.Id, contest.Name, contest.Description, contest.EndDate, contest.CreatedAt);
-        var winnerDto = winner is null ? null : new PhotographerDto(winner.Id, winner.Name, winner.Bio, winner.ContestId);
+        var winnerDto = winner is null ? null : new PhotographerDto(winner.Id, winner.Name, winner.Bio, winner.ContestId, winner.Token);
 
         return new ContestResultsDto(contestDto, topicResults, winnerDto);
     }

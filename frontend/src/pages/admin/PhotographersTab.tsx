@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, Upload, X } from 'lucide-react'
+import { Plus, Trash2, Upload, X, Link, Check } from 'lucide-react'
 import { api } from '../../api/client'
 import type { ContestDetail, Topic } from '../../api/types'
 
@@ -19,6 +19,13 @@ export default function PhotographersTab({ contestId, contest }: Props) {
   const [uploadFor, setUploadFor] = useState<{ photographerId: number; topicId: number } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [copiedToken, setCopiedToken] = useState<string | null>(null)
+
+  async function copyLink(token: string) {
+    await navigator.clipboard.writeText(`${window.location.origin}/photographer/${token}`)
+    setCopiedToken(token)
+    setTimeout(() => setCopiedToken(null), 2000)
+  }
 
   const { data: photographers } = useQuery({
     queryKey: ['photographers', contestId],
@@ -87,15 +94,15 @@ export default function PhotographersTab({ contestId, contest }: Props) {
       {/* Add photographer */}
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Add Photographer</h3>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             placeholder="Name"
             value={name}
             onChange={e => setName(e.target.value)}
           />
           <input
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             placeholder="Bio (optional)"
             value={bio}
             onChange={e => setBio(e.target.value)}
@@ -103,7 +110,7 @@ export default function PhotographersTab({ contestId, contest }: Props) {
           <button
             onClick={() => create.mutate()}
             disabled={!name.trim() || create.isPending}
-            className="flex items-center gap-1 bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+            className="flex items-center justify-center gap-1 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
           >
             <Plus size={14} /> Add
           </button>
@@ -142,6 +149,12 @@ export default function PhotographersTab({ contestId, contest }: Props) {
                 <span className="font-semibold text-gray-900">{p.name}</span>
                 {p.bio && <span className="text-sm text-gray-500 ml-2">{p.bio}</span>}
               </div>
+              <button
+                onClick={() => copyLink(p.token)}
+                className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${copiedToken === p.token ? 'bg-green-50 text-green-700' : 'text-indigo-600 hover:bg-indigo-50'}`}
+              >
+                {copiedToken === p.token ? <><Check size={12} /> Copied</> : <><Link size={12} /> Copy link</>}
+              </button>
               <button onClick={() => { setEditingId(p.id); setEditName(p.name); setEditBio(p.bio ?? '') }} className="text-xs text-gray-400 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100">Edit</button>
               <button onClick={() => { if (confirm('Delete photographer and all their photos?')) del.mutate(p.id) }} className="text-gray-400 hover:text-red-500 p-1 rounded"><Trash2 size={14} /></button>
             </div>

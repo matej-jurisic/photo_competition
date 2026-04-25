@@ -41,7 +41,7 @@ export default function ContestList() {
         {contests?.map(c => {
           const ended = new Date(c.endDate) < new Date()
           return (
-            <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
+            <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-3 min-w-0">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-gray-900">{c.name}</span>
@@ -55,7 +55,7 @@ export default function ContestList() {
                   End: {new Date(c.endDate).toLocaleDateString()}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <Link
                   to={`/results/${c.id}`}
                   className="text-xs text-indigo-600 hover:underline"

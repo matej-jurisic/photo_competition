@@ -67,7 +67,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
     private static ContestDetailDto ToDetail(Contest c) => new(
         c.Id, c.Name, c.Description, c.EndDate, c.CreatedAt,
         c.Photographers.Select(p => new PhotographerWithPhotosDto(
-            p.Id, p.Name, p.Bio, p.ContestId,
+            p.Id, p.Name, p.Bio, p.ContestId, p.Token,
             p.Photos.Select(ph => new PhotoDto(ph.Id, ph.Title, ph.ImageUrl, ph.PhotographerId, ph.TopicId)).ToList()
         )).ToList(),
         c.Topics.OrderBy(t => t.OrderIndex).Select(t => new TopicDto(t.Id, t.Name, t.ContestId, t.OrderIndex)).ToList(),

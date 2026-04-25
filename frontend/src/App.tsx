@@ -5,6 +5,7 @@ import ContestForm from './pages/admin/ContestForm'
 import ContestDetail from './pages/admin/ContestDetail'
 import JudgePage from './pages/judge/JudgePage'
 import ResultsPage from './pages/results/ResultsPage'
+import PhotographerPage from './pages/photographer/PhotographerPage'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="contests/:id" element={<ContestDetail />} />
       </Route>
       <Route path="/judge/:token" element={<JudgePage />} />
+      <Route path="/photographer/:token" element={<PhotographerPage />} />
       <Route path="/results/:contestId" element={<ResultsPage />} />
       <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes>

@@ -18,7 +18,7 @@ public class PhotographersController(AppDbContext db) : ControllerBase
             .Where(p => p.ContestId == contestId)
             .Include(p => p.Photos)
             .Select(p => new PhotographerWithPhotosDto(
-                p.Id, p.Name, p.Bio, p.ContestId,
+                p.Id, p.Name, p.Bio, p.ContestId, p.Token,
                 p.Photos.Select(ph => new PhotoDto(ph.Id, ph.Title, ph.ImageUrl, ph.PhotographerId, ph.TopicId)).ToList()))
             .ToListAsync();
     }
@@ -30,7 +30,7 @@ public class PhotographersController(AppDbContext db) : ControllerBase
         var p = new Photographer { Name = dto.Name, Bio = dto.Bio, ContestId = contestId };
         db.Photographers.Add(p);
         await db.SaveChangesAsync();
-        return new PhotographerDto(p.Id, p.Name, p.Bio, p.ContestId);
+        return new PhotographerDto(p.Id, p.Name, p.Bio, p.ContestId, p.Token);
     }
 
     [HttpPut("api/photographers/{id}")]
@@ -41,7 +41,7 @@ public class PhotographersController(AppDbContext db) : ControllerBase
         p.Name = dto.Name;
         p.Bio = dto.Bio;
         await db.SaveChangesAsync();
-        return new PhotographerDto(p.Id, p.Name, p.Bio, p.ContestId);
+        return new PhotographerDto(p.Id, p.Name, p.Bio, p.ContestId, p.Token);
     }
 
     [HttpDelete("api/photographers/{id}")]

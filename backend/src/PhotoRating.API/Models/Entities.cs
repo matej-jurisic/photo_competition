@@ -18,6 +18,7 @@ public class Photographer
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string? Bio { get; set; }
+    public Guid Token { get; set; } = Guid.NewGuid();
     public int ContestId { get; set; }
     public Contest Contest { get; set; } = null!;
     public List<Photo> Photos { get; set; } = [];

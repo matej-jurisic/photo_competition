@@ -13,8 +13,11 @@ public record ContestDetailDto(
 // Photographer
 public record CreatePhotographerDto(string Name, string? Bio);
 public record UpdatePhotographerDto(string Name, string? Bio);
-public record PhotographerDto(int Id, string Name, string? Bio, int ContestId);
-public record PhotographerWithPhotosDto(int Id, string Name, string? Bio, int ContestId, List<PhotoDto> Photos);
+public record PhotographerDto(int Id, string Name, string? Bio, int ContestId, Guid Token);
+public record PhotographerWithPhotosDto(int Id, string Name, string? Bio, int ContestId, Guid Token, List<PhotoDto> Photos);
+
+// Photographer session (public, by token)
+public record PhotographerSessionDto(PhotographerWithPhotosDto Photographer, ContestDto Contest, List<TopicDto> Topics);
 
 // Topic
 public record CreateTopicDto(string Name, int OrderIndex);

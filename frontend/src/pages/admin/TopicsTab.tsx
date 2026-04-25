@@ -36,7 +36,7 @@ export default function TopicsTab({ contestId }: { contestId: number }) {
     <div className="max-w-lg space-y-4">
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Add Topic</h3>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <input
             className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             placeholder="Topic name (e.g. Landscape, Portrait)"
