@@ -42,6 +42,6 @@ public record RatingDto(int Id, int PhotoId, int Score, string? Comment, DateTim
 public record JudgeSessionDto(JudgeDto Judge, ContestDetailDto Contest, List<RatingDto> ExistingRatings);
 
 // Results
-public record PhotographerScoreDto(PhotographerDto Photographer, double AverageScore, int TotalRatings, int TotalPhotos);
+public record PhotographerScoreDto(PhotographerDto Photographer, double AverageScore, int TotalRatings, int TotalPhotos, PhotoDto? TopPhoto);
 public record TopicResultDto(TopicDto Topic, List<PhotographerScoreDto> Scores);
-public record ContestResultsDto(ContestDto Contest, List<TopicResultDto> Topics, PhotographerDto? Winner);
+public record ContestResultsDto(ContestDto Contest, List<TopicResultDto> Topics, PhotographerDto? Winner, double? WinnerScore);

@@ -76,6 +76,7 @@ export interface PhotographerScore {
   averageScore: number
   totalRatings: number
   totalPhotos: number
+  topPhoto: Photo | null
 }
 
 export interface TopicResult {
@@ -87,4 +88,5 @@ export interface ContestResults {
   contest: Contest
   topics: TopicResult[]
   winner: Photographer | null
+  winnerScore: number | null
 }

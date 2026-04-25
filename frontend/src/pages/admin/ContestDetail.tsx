@@ -86,7 +86,7 @@ export default function ContestDetail() {
             <button
               onClick={() => { if (confirm('Mark this contest as completed? Results will become public and ratings will be locked.')) setComplete.mutate(true) }}
               disabled={setComplete.isPending}
-              className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+              className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
             >
               <CheckCircle size={14} /> Complete
             </button>
