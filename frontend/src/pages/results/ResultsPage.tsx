@@ -146,13 +146,6 @@ export default function ResultsPage() {
                           <span className="text-xs font-semibold text-amber-600 uppercase tracking-wide">Category Winner</span>
                         </div>
                         <div className="font-bold text-gray-900 text-lg truncate">{winner.photographer.name}</div>
-                        {winner.totalRatings > 0 && (
-                          <div className="flex items-center gap-1.5 mt-1 text-sm text-gray-600">
-                            <span className="font-bold text-gray-900">{winner.averageScore.toFixed(2)}</span>
-                            <Star size={13} className="text-amber-400" fill="currentColor" />
-                            <span className="text-gray-400">({winner.totalRatings} ratings)</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   )}
