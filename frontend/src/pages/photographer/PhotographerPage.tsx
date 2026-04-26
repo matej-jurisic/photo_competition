@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Camera, Upload, X, AlertTriangle, CheckCircle, Gift } from 'lucide-react'
+import { Camera, Upload, X, AlertTriangle, CheckCircle, Gift, Users } from 'lucide-react'
 import { api } from '../../api/client'
 
 export default function PhotographerPage() {
@@ -12,11 +12,18 @@ export default function PhotographerPage() {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [justUploaded, setJustUploaded] = useState<number | null>(null)
+  const [showCompetitors, setShowCompetitors] = useState(false)
 
   const { data: session, isLoading, error } = useQuery({
     queryKey: ['photographer-session', token],
     queryFn: () => api.photographerSession.get(token!),
     enabled: !!token,
+  })
+
+  const { data: competitors } = useQuery({
+    queryKey: ['photographer-competitors', token],
+    queryFn: () => api.photographerSession.competitors(token!),
+    enabled: !!token && showCompetitors,
   })
 
   const delPhoto = useMutation({
@@ -68,9 +75,18 @@ export default function PhotographerPage() {
             <h1 className="font-bold text-gray-900">{session.contest.name}</h1>
             <p className="text-xs text-gray-500">{session.photographer.name}</p>
           </div>
-          {isEnded && (
-            <span className="ml-auto text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Uploads closed</span>
-          )}
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setShowCompetitors(true)}
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-600 bg-gray-100 hover:bg-indigo-50 px-3 py-1.5 rounded-full transition-colors"
+            >
+              <Users size={14} />
+              Competitors
+            </button>
+            {isEnded && (
+              <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Uploads closed</span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -189,6 +205,38 @@ export default function PhotographerPage() {
       {uploading && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 text-sm text-gray-700">Uploading...</div>
+        </div>
+      )}
+
+      {showCompetitors && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShowCompetitors(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Users size={18} className="text-indigo-600" />
+                <h2 className="font-semibold text-gray-900">Competitors</h2>
+              </div>
+              <button onClick={() => setShowCompetitors(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={18} />
+              </button>
+            </div>
+            {!competitors ? (
+              <p className="text-sm text-gray-400">Loading...</p>
+            ) : competitors.length === 0 ? (
+              <p className="text-sm text-gray-400">No other competitors yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {competitors.map((name, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                    <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                      {name[0]?.toUpperCase()}
+                    </span>
+                    {name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -67,6 +67,21 @@ public class PhotographerSessionController(AppDbContext db, IConfiguration confi
         return new PhotoDto(photo.Id, photo.Title, photo.ImageUrl, photo.PhotographerId, photo.TopicId);
     }
 
+    [HttpGet("competitors")]
+    public async Task<ActionResult<List<string>>> GetCompetitors(Guid token)
+    {
+        var p = await db.Photographers.FirstOrDefaultAsync(p => p.Token == token);
+        if (p is null) return NotFound();
+
+        var names = await db.Photographers
+            .Where(ph => ph.ContestId == p.ContestId && ph.Id != p.Id)
+            .OrderBy(ph => ph.Name)
+            .Select(ph => ph.Name)
+            .ToListAsync();
+
+        return names;
+    }
+
     [HttpDelete("photos/{photoId}")]
     public async Task<IActionResult> DeletePhoto(Guid token, int photoId)
     {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, Check, Link } from 'lucide-react'
+import { Plus, Trash2, Check, Link, Copy } from 'lucide-react'
 import { api } from '../../api/client'
 
 export default function JudgesTab({ contestId }: { contestId: number }) {
@@ -11,6 +11,8 @@ export default function JudgesTab({ contestId }: { contestId: number }) {
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [copiedAll, setCopiedAll] = useState(false)
+  const [selected, setSelected] = useState<Set<number>>(new Set())
 
   const { data: judges } = useQuery({
     queryKey: ['judges', contestId],
@@ -31,6 +33,28 @@ export default function JudgesTab({ contestId }: { contestId: number }) {
     mutationFn: api.judges.delete,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['judges', contestId] }),
   })
+
+  function toggleSelect(id: number) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (!judges) return
+    setSelected(selected.size === judges.length ? new Set() : new Set(judges.map(j => j.id)))
+  }
+
+  async function copyLinks() {
+    if (!judges?.length) return
+    const targets = selected.size > 0 ? judges.filter(j => selected.has(j.id)) : judges
+    const text = targets.map(j => `${j.name}: ${window.location.origin}/judge/${j.token}`).join('\n')
+    await navigator.clipboard.writeText(text)
+    setCopiedAll(true)
+    setTimeout(() => setCopiedAll(false), 2000)
+  }
 
   async function copyLink(token: string) {
     const link = `${window.location.origin}/judge/${token}`
@@ -67,6 +91,34 @@ export default function JudgesTab({ contestId }: { contestId: number }) {
         </div>
       </div>
 
+      {judges && judges.length > 1 && (
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={selected.size === judges.length}
+              ref={el => { if (el) el.indeterminate = selected.size > 0 && selected.size < judges.length }}
+              onChange={toggleSelectAll}
+              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            {selected.size > 0 ? `${selected.size} selected` : 'Select all'}
+          </label>
+          <button
+            onClick={copyLinks}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors ${
+              copiedAll ? 'bg-green-50 text-green-700' : 'text-indigo-600 hover:bg-indigo-50 border border-indigo-200'
+            }`}
+          >
+            {copiedAll
+              ? <><Check size={12} /> Copied</>
+              : selected.size > 0
+                ? <><Copy size={12} /> Copy {selected.size} links</>
+                : <><Copy size={12} /> Copy all links</>
+            }
+          </button>
+        </div>
+      )}
+
       <div className="space-y-2">
         {judges?.map(j => (
           <div key={j.id} className="bg-white rounded-xl border border-gray-200 p-3">
@@ -90,6 +142,14 @@ export default function JudgesTab({ contestId }: { contestId: number }) {
               </div>
             ) : (
               <div className="flex items-start gap-2">
+                {judges && judges.length > 1 && (
+                  <input
+                    type="checkbox"
+                    checked={selected.has(j.id)}
+                    onChange={() => toggleSelect(j.id)}
+                    className="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 flex-shrink-0"
+                  />
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm text-gray-900">{j.name}</div>
                   {j.email && <div className="text-xs text-gray-500 truncate">{j.email}</div>}

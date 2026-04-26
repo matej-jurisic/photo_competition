@@ -96,5 +96,7 @@ export const api = {
       }).then(r => r.data),
     deletePhoto: (token: string, photoId: number) =>
       http.delete(`/api/photographer-sessions/${token}/photos/${photoId}`),
+    competitors: (token: string) =>
+      http.get<string[]>(`/api/photographer-sessions/${token}/competitors`).then(r => r.data),
   },
 }
