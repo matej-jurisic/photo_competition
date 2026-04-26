@@ -73,3 +73,14 @@ public class Rating
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 }
+
+public class Badge
+{
+    public int Id { get; set; }
+    public int JudgeId { get; set; }
+    public Judge Judge { get; set; } = null!;
+    public int PhotoId { get; set; }
+    public Photo Photo { get; set; } = null!;
+    public string BadgeName { get; set; } = "";
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}

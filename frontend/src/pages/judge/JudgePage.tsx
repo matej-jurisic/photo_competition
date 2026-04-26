@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { Camera, Star, CheckCircle, AlertTriangle, Gift } from 'lucide-react'
+import { Camera, Star, CheckCircle, AlertTriangle, Gift, Award } from 'lucide-react'
 import { api } from '../../api/client'
 import type { Topic } from '../../api/types'
+
+const BADGE_OPTIONS = [
+  'Majstorstvo boja',
+  'Originalna ideja',
+  'Savršen trenutak',
+  'Nasmijalo me',
+  'Skriveni dragulj',
+]
 
 interface LocalRating {
   photoId: number
@@ -14,6 +22,8 @@ interface LocalRating {
 export default function JudgePage() {
   const { token } = useParams<{ token: string }>()
   const [ratings, setRatings] = useState<Record<number, LocalRating>>({})
+  // photoId -> badgeName (at most one badge per photo, at most 3 total)
+  const [badges, setBadges] = useState<Record<number, string>>({})
   const [saved, setSaved] = useState(false)
 
   const { data: session, isLoading, error } = useQuery({
@@ -30,12 +40,24 @@ export default function JudgePage() {
       }
       setRatings(init)
     }
+    if (session?.existingBadges) {
+      const init: Record<number, string> = {}
+      for (const b of session.existingBadges) {
+        init[b.photoId] = b.badgeName
+      }
+      setBadges(init)
+    }
   }, [session])
 
   const submit = useMutation({
-    mutationFn: () => {
-      const list = Object.values(ratings)
-      return api.session.submitRatings(token!, list.map(r => ({ ...r, comment: r.comment })))
+    mutationFn: async () => {
+      const ratingsList = Object.values(ratings)
+      const badgesList = Object.entries(badges).map(([photoId, badgeName]) => ({
+        photoId: Number(photoId),
+        badgeName,
+      }))
+      await api.session.submitBadges(token!, badgesList)
+      return api.session.submitRatings(token!, ratingsList.map(r => ({ ...r, comment: r.comment })))
     },
     onSuccess: () => { setSaved(true); setTimeout(() => setSaved(false), 3000) },
   })
@@ -63,9 +85,28 @@ export default function JudgePage() {
 
   const totalPhotos = contest.photographers.reduce((s, p) => s + p.photos.length, 0)
   const ratedCount = Object.keys(ratings).length
+  const badgeCount = Object.keys(badges).length
 
   function setRating(photoId: number, score: number, comment: string) {
     setRatings(prev => ({ ...prev, [photoId]: { photoId, score, comment } }))
+  }
+
+  function toggleBadge(photoId: number, badgeName: string) {
+    setBadges(prev => {
+      const current = prev[photoId]
+      if (current === badgeName) {
+        // Remove badge from this photo
+        const next = { ...prev }
+        delete next[photoId]
+        return next
+      }
+      if (current) {
+        // Replace existing badge on this photo
+        return { ...prev, [photoId]: badgeName }
+      }
+      if (badgeCount >= 3) return prev  // limit reached
+      return { ...prev, [photoId]: badgeName }
+    })
   }
 
   return (
@@ -82,6 +123,10 @@ export default function JudgePage() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-500">{ratedCount}/{totalPhotos} rated</span>
+            <span className="text-sm text-gray-500 flex items-center gap-1">
+              <Award size={14} className="text-indigo-400" />
+              {badgeCount}/3 badges
+            </span>
             {!isEnded && !isNotYetOpen && (
               <button
                 onClick={() => submit.mutate()}
@@ -122,6 +167,18 @@ export default function JudgePage() {
           </div>
         )}
 
+        {!isEnded && !isNotYetOpen && (
+          <div className="mb-6 bg-purple-50 border border-purple-200 rounded-xl p-4 flex items-start gap-3">
+            <Award size={18} className="text-purple-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Special Badges</span>
+              <p className="text-sm text-purple-900 mt-0.5">
+                You can award up to <strong>3 special badges</strong> to photos that deserve recognition beyond their score. Each photo can receive one badge.
+              </p>
+            </div>
+          </div>
+        )}
+
         {contest.topics.map((topic: Topic) => {
           return (
             <div key={topic.id} className="mb-10">
@@ -144,6 +201,9 @@ export default function JudgePage() {
                       <div className="space-y-5">
                         {photos.map(photo => {
                           const r = ratings[photo.id]
+                          const assignedBadge = badges[photo.id]
+                          const canAssignBadge = !isEnded && !isNotYetOpen && (!assignedBadge ? badgeCount < 3 : true)
+
                           return (
                             <div key={photo.id}>
                               <img
@@ -179,8 +239,30 @@ export default function JudgePage() {
                                   placeholder="Comment (optional)"
                                   value={r?.comment ?? ''}
                                   onChange={e => setRating(photo.id, r?.score ?? 0, e.target.value)}
-                                  className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:bg-gray-50 disabled:text-gray-400"
+                                  className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:bg-gray-50 disabled:text-gray-400 mb-2"
                                 />
+                                {/* Badge row */}
+                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                  {BADGE_OPTIONS.map(badge => {
+                                    const isSelected = assignedBadge === badge
+                                    const isDisabled = isEnded || isNotYetOpen || (!isSelected && !canAssignBadge)
+                                    return (
+                                      <button
+                                        key={badge}
+                                        disabled={isDisabled}
+                                        onClick={() => toggleBadge(photo.id, badge)}
+                                        className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                                          isSelected
+                                            ? 'bg-purple-600 text-white border-purple-600'
+                                            : 'border-gray-200 text-gray-500 hover:border-purple-400 hover:text-purple-600'
+                                        }`}
+                                      >
+                                        <Award size={10} />
+                                        {badge}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
                               </div>
                             </div>
                           )

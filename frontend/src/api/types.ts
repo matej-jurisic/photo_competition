@@ -65,10 +65,18 @@ export interface Rating {
   createdAt: string
 }
 
+export interface Badge {
+  id: number
+  judgeId: number
+  photoId: number
+  badgeName: string
+}
+
 export interface JudgeSession {
   judge: Judge
   contest: ContestDetail
   existingRatings: Rating[]
+  existingBadges: Badge[]
 }
 
 export interface PhotographerScore {
@@ -84,9 +92,18 @@ export interface TopicResult {
   scores: PhotographerScore[]
 }
 
+export interface BadgedPhoto {
+  photo: Photo
+  photographerName: string
+  topicName: string
+  badges: string[]
+}
+
 export interface ContestResults {
   contest: Contest
   topics: TopicResult[]
   winner: Photographer | null
   winnerScore: number | null
+  tiedPhotographers: Photographer[]
+  badgedPhotos: BadgedPhoto[]
 }

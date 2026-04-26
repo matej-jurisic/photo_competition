@@ -1,7 +1,7 @@
 import axios from 'axios'
 import type {
   Contest, ContestDetail, Photographer, PhotographerWithPhotos,
-  Topic, Photo, Judge, Rating, JudgeSession, ContestResults
+  Topic, Photo, Judge, Rating, Badge, JudgeSession, ContestResults
 } from './types'
 
 const BASE = import.meta.env.VITE_API_URL ?? ''
@@ -83,6 +83,8 @@ export const api = {
       http.get<JudgeSession>(`/api/sessions/${token}`).then(r => r.data),
     submitRatings: (token: string, ratings: { photoId: number; score: number; comment: string }[]) =>
       http.post<Rating[]>(`/api/sessions/${token}/ratings`, { ratings }).then(r => r.data),
+    submitBadges: (token: string, badges: { photoId: number; badgeName: string }[]) =>
+      http.post<Badge[]>(`/api/sessions/${token}/badges`, { badges }).then(r => r.data),
   },
 
   photographerSession: {

@@ -68,16 +68,44 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
         }).ToList();
 
         Photographer? winner = null;
+        List<Photographer> tiedPhotographers = [];
         var withRatings = overallScores.Where(x => x.Avg > 0).OrderByDescending(x => x.Avg).ToList();
         if (withRatings.Count >= 2 && withRatings[0].Avg > withRatings[1].Avg)
             winner = withRatings[0].Photographer;
         else if (withRatings.Count == 1)
             winner = withRatings[0].Photographer;
+        else if (withRatings.Count >= 2)
+        {
+            var topAvg = withRatings[0].Avg;
+            tiedPhotographers = withRatings.Where(x => x.Avg == topAvg).Select(x => x.Photographer).ToList();
+        }
+
+        var photoIds = photos.Select(p => p.Id).ToList();
+        var allBadges = await db.Badges
+            .Where(b => photoIds.Contains(b.PhotoId))
+            .ToListAsync();
+
+        var badgedPhotos = allBadges
+            .GroupBy(b => b.PhotoId)
+            .Select(g =>
+            {
+                var photo = photos.First(p => p.Id == g.Key);
+                var photographer = contest.Photographers.First(p => p.Id == photo.PhotographerId);
+                var topic = contest.Topics.First(t => t.Id == photo.TopicId);
+                return new BadgedPhotoDto(
+                    new PhotoDto(photo.Id, photo.Title, photo.ImageUrl, photo.PhotographerId, photo.TopicId),
+                    photographer.Name,
+                    topic.Name,
+                    g.Select(b => b.BadgeName).ToList()
+                );
+            })
+            .ToList();
 
         var contestDto = new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Reward, contest.IsCompleted);
         var winnerDto = winner is null ? null : new PhotographerDto(winner.Id, winner.Name, winner.Bio, winner.ContestId, winner.Token);
         var winnerScore = winner is null ? (double?)null : overallScores.First(x => x.Photographer.Id == winner.Id).Avg;
+        var tiedDtos = tiedPhotographers.Select(p => new PhotographerDto(p.Id, p.Name, p.Bio, p.ContestId, p.Token)).ToList();
 
-        return new ContestResultsDto(contestDto, topicResults, winnerDto, winnerScore);
+        return new ContestResultsDto(contestDto, topicResults, winnerDto, winnerScore, tiedDtos, badgedPhotos);
     }
 }

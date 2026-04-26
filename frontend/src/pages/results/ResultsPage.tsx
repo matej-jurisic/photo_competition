@@ -1,11 +1,87 @@
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Trophy, ArrowLeft, Star, Gift, Lock } from 'lucide-react'
+import { Trophy, ArrowLeft, Star, Gift, Lock, Award, ChevronLeft, ChevronRight } from 'lucide-react'
 import axios from 'axios'
 import { api } from '../../api/client'
-import type { PhotographerScore } from '../../api/types'
+import type { PhotographerScore, BadgedPhoto } from '../../api/types'
 
 const BASE = import.meta.env.VITE_API_URL ?? ''
+
+function BadgeCarousel({ photos }: { photos: BadgedPhoto[] }) {
+  const [index, setIndex] = useState(0)
+  if (photos.length === 0) return null
+
+  const prev = () => setIndex(i => (i - 1 + photos.length) % photos.length)
+  const next = () => setIndex(i => (i + 1) % photos.length)
+  const current = photos[index]
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
+      <div className="px-6 pt-5 pb-3 flex items-center gap-2 border-b border-gray-100">
+        <Award size={18} className="text-purple-500" />
+        <h2 className="font-bold text-gray-900">Special Badges</h2>
+        <span className="ml-auto text-sm text-gray-400">{index + 1} / {photos.length}</span>
+      </div>
+      <div className="flex items-stretch">
+        <button
+          onClick={prev}
+          disabled={photos.length <= 1}
+          className="px-3 text-gray-400 hover:text-gray-700 disabled:opacity-20 flex-shrink-0"
+        >
+          <ChevronLeft size={22} />
+        </button>
+
+        <div className="flex-1 py-5 flex gap-5 items-start min-w-0">
+          <img
+            src={`${BASE}${current.photo.imageUrl}`}
+            alt={current.photo.title ?? current.photographerName}
+            className="w-40 h-28 object-cover rounded-xl flex-shrink-0"
+          />
+          <div className="min-w-0 flex flex-col gap-2 pt-1">
+            <p className="font-semibold text-gray-900 truncate">{current.photographerName}</p>
+            <p className="text-xs text-gray-400">{current.topicName}</p>
+            {current.photo.title && (
+              <p className="text-sm text-gray-600 italic truncate">"{current.photo.title}"</p>
+            )}
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {current.badges.map((badge, i) => (
+                <span
+                  key={i}
+                  className="flex items-center gap-1 text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-medium"
+                >
+                  <Award size={10} />
+                  {badge}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={next}
+          disabled={photos.length <= 1}
+          className="px-3 text-gray-400 hover:text-gray-700 disabled:opacity-20 flex-shrink-0"
+        >
+          <ChevronRight size={22} />
+        </button>
+      </div>
+
+      {/* Dot indicators */}
+      {photos.length > 1 && (
+        <div className="flex justify-center gap-1.5 pb-4">
+          {photos.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIndex(i)}
+              className={`w-1.5 h-1.5 rounded-full transition-colors ${i === index ? 'bg-purple-500' : 'bg-gray-200'}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function ResultsPage() {
   const { contestId } = useParams<{ contestId: string }>()
@@ -103,12 +179,19 @@ export default function ResultsPage() {
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8 flex items-center gap-4">
               <Trophy size={36} className="text-gray-400 flex-shrink-0" />
               <div>
-                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Overall Result</div>
-                <div className="text-2xl font-bold text-gray-700">Tie</div>
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Overall Result — Tie</div>
+                <div className="text-2xl font-bold text-gray-700">
+                  {results.tiedPhotographers.map(p => p.name).join(' · ')}
+                </div>
               </div>
             </div>
           )
         })()}
+
+        {/* Badge carousel */}
+        {results.badgedPhotos.length > 0 && (
+          <BadgeCarousel photos={results.badgedPhotos} />
+        )}
 
         {/* Per-topic results */}
         <div className="space-y-6">

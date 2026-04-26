@@ -39,9 +39,15 @@ public record BulkUpsertRatingsDto(List<UpsertRatingDto> Ratings);
 public record RatingDto(int Id, int PhotoId, int Score, string? Comment, DateTime CreatedAt);
 
 // Judge session (public)
-public record JudgeSessionDto(JudgeDto Judge, ContestDetailDto Contest, List<RatingDto> ExistingRatings);
+public record JudgeSessionDto(JudgeDto Judge, ContestDetailDto Contest, List<RatingDto> ExistingRatings, List<BadgeDto> ExistingBadges);
+
+// Badges
+public record BadgeDto(int Id, int JudgeId, int PhotoId, string BadgeName);
+public record BadgeItemDto(int PhotoId, string BadgeName);
+public record SetBadgesDto(List<BadgeItemDto> Badges);
+public record BadgedPhotoDto(PhotoDto Photo, string PhotographerName, string TopicName, List<string> Badges);
 
 // Results
 public record PhotographerScoreDto(PhotographerDto Photographer, double AverageScore, int TotalRatings, int TotalPhotos, PhotoDto? TopPhoto);
 public record TopicResultDto(TopicDto Topic, List<PhotographerScoreDto> Scores);
-public record ContestResultsDto(ContestDto Contest, List<TopicResultDto> Topics, PhotographerDto? Winner, double? WinnerScore);
+public record ContestResultsDto(ContestDto Contest, List<TopicResultDto> Topics, PhotographerDto? Winner, double? WinnerScore, List<PhotographerDto> TiedPhotographers, List<BadgedPhotoDto> BadgedPhotos);

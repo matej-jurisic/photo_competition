@@ -11,6 +11,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Photo> Photos => Set<Photo>();
     public DbSet<Judge> Judges => Set<Judge>();
     public DbSet<Rating> Ratings => Set<Rating>();
+    public DbSet<Badge> Badges => Set<Badge>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -25,5 +26,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         model.Entity<Photographer>()
             .HasIndex(p => p.Token)
             .IsUnique();
+
+        model.Entity<Badge>()
+            .HasIndex(b => new { b.JudgeId, b.PhotoId })
+            .IsUnique();
+
+        model.Entity<Badge>()
+            .HasOne(b => b.Judge)
+            .WithMany()
+            .HasForeignKey(b => b.JudgeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        model.Entity<Badge>()
+            .HasOne(b => b.Photo)
+            .WithMany()
+            .HasForeignKey(b => b.PhotoId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -41,8 +41,13 @@ public class JudgeSessionController(AppDbContext db) : ControllerBase
             .Select(r => new RatingDto(r.Id, r.PhotoId, r.Score, r.Comment, r.CreatedAt))
             .ToList();
 
+        var badges = await db.Badges
+            .Where(b => b.JudgeId == judge.Id)
+            .Select(b => new BadgeDto(b.Id, b.JudgeId, b.PhotoId, b.BadgeName))
+            .ToListAsync();
+
         var judgeDto = new JudgeDto(judge.Id, judge.Name, judge.Email, judge.Token, judge.ContestId, judge.CreatedAt);
-        return new JudgeSessionDto(judgeDto, contestDto, ratings);
+        return new JudgeSessionDto(judgeDto, contestDto, ratings, badges);
     }
 
     [HttpPost("ratings")]
@@ -94,5 +99,42 @@ public class JudgeSessionController(AppDbContext db) : ControllerBase
             .ToListAsync();
 
         return updated;
+    }
+
+    [HttpPost("badges")]
+    public async Task<ActionResult<List<BadgeDto>>> SetBadges(Guid token, SetBadgesDto dto)
+    {
+        var validBadges = new[] { "Majstorstvo boja", "Originalna ideja", "Savršen trenutak", "Nasmijalo me", "Skriveni dragulj" };
+
+        if (dto.Badges.Count > 3)
+            return BadRequest("You can assign at most 3 badges.");
+
+        if (dto.Badges.Any(b => !validBadges.Contains(b.BadgeName)))
+            return BadRequest("Invalid badge name.");
+
+        if (dto.Badges.Select(b => b.PhotoId).Distinct().Count() != dto.Badges.Count)
+            return BadRequest("Each photo can only receive one badge.");
+
+        var judge = await db.Judges
+            .Include(j => j.Contest)
+            .FirstOrDefaultAsync(j => j.Token == token);
+
+        if (judge is null) return NotFound();
+
+        if (judge.Contest.IsCompleted || DateTime.UtcNow > judge.Contest.RatingEndDate)
+            return BadRequest("Contest is closed.");
+
+        var existing = await db.Badges.Where(b => b.JudgeId == judge.Id).ToListAsync();
+        db.Badges.RemoveRange(existing);
+
+        foreach (var item in dto.Badges)
+            db.Badges.Add(new Badge { JudgeId = judge.Id, PhotoId = item.PhotoId, BadgeName = item.BadgeName });
+
+        await db.SaveChangesAsync();
+
+        return await db.Badges
+            .Where(b => b.JudgeId == judge.Id)
+            .Select(b => new BadgeDto(b.Id, b.JudgeId, b.PhotoId, b.BadgeName))
+            .ToListAsync();
     }
 }
