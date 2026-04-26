@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Plus, X } from 'lucide-react'
 import { api } from '../../api/client'
 
 export default function ContestForm() {
@@ -12,7 +12,7 @@ export default function ContestForm() {
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [reward, setReward] = useState('')
+  const [rewards, setRewards] = useState<string[]>([])
   const [uploadEndDate, setUploadEndDate] = useState('')
   const [ratingEndDate, setRatingEndDate] = useState('')
   const [error, setError] = useState('')
@@ -27,20 +27,20 @@ export default function ContestForm() {
     if (existing) {
       setName(existing.name)
       setDescription(existing.description ?? '')
-      setReward(existing.reward ?? '')
+      setRewards(existing.rewards ?? [])
       setUploadEndDate(existing.uploadEndDate.slice(0, 10))
       setRatingEndDate(existing.ratingEndDate.slice(0, 10))
     }
   }, [existing])
 
   const create = useMutation({
-    mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; reward: string }) => api.contests.create(d),
+    mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[] }) => api.contests.create(d),
     onSuccess: c => { qc.invalidateQueries({ queryKey: ['contests'] }); navigate(`/admin/contests/${c.id}`) },
     onError: () => setError('Failed to save. Check your admin key.'),
   })
 
   const update = useMutation({
-    mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; reward: string }) => api.contests.update(Number(id), d),
+    mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[] }) => api.contests.update(Number(id), d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['contests'] }); navigate(`/admin/contests/${id}`) },
     onError: () => setError('Failed to save.'),
   })
@@ -58,7 +58,7 @@ export default function ContestForm() {
     const payload = {
       name: name.trim(),
       description: description.trim(),
-      reward: reward.trim(),
+      rewards: rewards.map(r => r.trim()).filter(r => r.length > 0),
       uploadEndDate: new Date(uploadEndDate).toISOString(),
       ratingEndDate: new Date(ratingEndDate).toISOString(),
     }
@@ -93,15 +93,35 @@ export default function ContestForm() {
             onChange={e => setDescription(e.target.value)}
           />
         </label>
-        <label className="block">
-          <span className="text-sm font-medium text-gray-700">Reward</span>
-          <input
-            className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="e.g. Trophy + €200 voucher"
-            value={reward}
-            onChange={e => setReward(e.target.value)}
-          />
-        </label>
+        <div>
+          <span className="text-sm font-medium text-gray-700">Rewards</span>
+          <div className="mt-1 flex flex-col gap-2">
+            {rewards.map((r, i) => (
+              <div key={i} className="flex gap-2">
+                <input
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="e.g. Trophy + €200 voucher"
+                  value={r}
+                  onChange={e => setRewards(rewards.map((v, j) => j === i ? e.target.value : v))}
+                />
+                <button
+                  type="button"
+                  onClick={() => setRewards(rewards.filter((_, j) => j !== i))}
+                  className="p-2 text-gray-400 hover:text-red-500"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setRewards([...rewards, ''])}
+              className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 self-start"
+            >
+              <Plus size={15} /> Add reward
+            </button>
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="text-sm font-medium text-gray-700">Upload Deadline *</span>

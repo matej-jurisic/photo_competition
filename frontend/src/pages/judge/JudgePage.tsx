@@ -157,12 +157,18 @@ export default function JudgePage() {
           </div>
         )}
 
-        {contest.reward && (
-          <div className="mb-6 bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center gap-3">
-            <Gift size={18} className="text-indigo-500 flex-shrink-0" />
+        {contest.rewards.length > 0 && (
+          <div className="mb-6 bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-start gap-3">
+            <Gift size={18} className="text-indigo-500 flex-shrink-0 mt-0.5" />
             <div>
-              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Reward</span>
-              <p className="text-sm text-indigo-900 mt-0.5">{contest.reward}</p>
+              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">
+                {contest.rewards.length === 1 ? 'Reward' : 'Rewards'}
+              </span>
+              <ul className="mt-0.5 space-y-0.5">
+                {contest.rewards.map((r, i) => (
+                  <li key={i} className="text-sm text-indigo-900">{r}</li>
+                ))}
+              </ul>
             </div>
           </div>
         )}

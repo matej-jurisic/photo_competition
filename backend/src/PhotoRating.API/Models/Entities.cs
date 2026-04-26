@@ -5,7 +5,7 @@ public class Contest
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string? Description { get; set; }
-    public string? Reward { get; set; }
+    public List<string> Rewards { get; set; } = [];
     public DateTime UploadEndDate { get; set; }
     public DateTime RatingEndDate { get; set; }
     public bool IsCompleted { get; set; }

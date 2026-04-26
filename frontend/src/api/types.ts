@@ -2,7 +2,7 @@ export interface Contest {
   id: number
   name: string
   description: string | null
-  reward: string | null
+  rewards: string[]
   uploadEndDate: string
   ratingEndDate: string
   isCompleted: boolean

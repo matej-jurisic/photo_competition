@@ -141,13 +141,19 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Reward */}
-        {results.contest.reward && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5 mb-6 flex items-center gap-4">
-            <Gift size={28} className="text-indigo-500 flex-shrink-0" />
+        {/* Rewards */}
+        {results.contest.rewards.length > 0 && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5 mb-6 flex items-start gap-4">
+            <Gift size={28} className="text-indigo-500 flex-shrink-0 mt-0.5" />
             <div>
-              <div className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1">Reward</div>
-              <div className="text-lg font-semibold text-indigo-900">{results.contest.reward}</div>
+              <div className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-2">
+                {results.contest.rewards.length === 1 ? 'Reward' : 'Rewards'}
+              </div>
+              <ul className="space-y-1">
+                {results.contest.rewards.map((r, i) => (
+                  <li key={i} className="text-lg font-semibold text-indigo-900">{r}</li>
+                ))}
+              </ul>
             </div>
           </div>
         )}

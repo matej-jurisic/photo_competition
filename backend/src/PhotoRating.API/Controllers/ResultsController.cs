@@ -101,7 +101,7 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
             })
             .ToList();
 
-        var contestDto = new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Reward, contest.IsCompleted);
+        var contestDto = new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted);
         var winnerDto = winner is null ? null : new PhotographerDto(winner.Id, winner.Name, winner.Bio, winner.ContestId, winner.Token);
         var winnerScore = winner is null ? (double?)null : overallScores.First(x => x.Photographer.Id == winner.Id).Avg;
         var tiedDtos = tiedPhotographers.Select(p => new PhotographerDto(p.Id, p.Name, p.Bio, p.ContestId, p.Token)).ToList();

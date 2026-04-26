@@ -85,10 +85,14 @@ export default function PhotographerPage() {
           {session.contest.description && (
             <p className="text-sm text-gray-700">{session.contest.description}</p>
           )}
-          {session.contest.reward && (
-            <div className="flex items-center gap-2">
-              <Gift size={15} className="text-indigo-500 flex-shrink-0" />
-              <span className="text-sm font-medium text-indigo-700">{session.contest.reward}</span>
+          {session.contest.rewards.length > 0 && (
+            <div className="flex items-start gap-2">
+              <Gift size={15} className="text-indigo-500 flex-shrink-0 mt-0.5" />
+              <ul className="space-y-0.5">
+                {session.contest.rewards.map((r, i) => (
+                  <li key={i} className="text-sm font-medium text-indigo-700">{r}</li>
+                ))}
+              </ul>
             </div>
           )}
           <div className="flex flex-col gap-1 text-xs text-gray-400">

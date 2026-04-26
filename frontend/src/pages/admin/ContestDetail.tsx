@@ -60,8 +60,12 @@ export default function ContestDetail() {
             {phase === 'upload' && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Upload open</span>}
           </div>
           {contest.description && <p className="text-sm text-gray-500 mt-1">{contest.description}</p>}
-          {contest.reward && (
-            <p className="text-sm text-indigo-600 mt-1">Reward: {contest.reward}</p>
+          {contest.rewards.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {contest.rewards.map((r, i) => (
+                <span key={i} className="text-sm text-indigo-600">{r}</span>
+              ))}
+            </div>
           )}
           <p className="text-xs text-gray-400 mt-1">
             Uploads until {new Date(contest.uploadEndDate).toLocaleDateString()} · Ratings until {new Date(contest.ratingEndDate).toLocaleDateString()}
