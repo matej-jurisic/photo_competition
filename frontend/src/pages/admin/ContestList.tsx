@@ -73,7 +73,7 @@ export default function ContestList() {
               {c.description && <p className="text-sm text-gray-500 mt-1 truncate">{c.description}</p>}
               <div className="flex items-center justify-between mt-1 gap-2">
                 <p className="text-xs text-gray-400">
-                  Uploads until {new Date(c.uploadEndDate).toLocaleDateString()} · Ratings until {new Date(c.ratingEndDate).toLocaleDateString()}
+                  Uploads until {new Date(c.uploadEndDate).toLocaleDateString('en-GB')} · Ratings until {new Date(c.ratingEndDate).toLocaleDateString('en-GB')}
                 </p>
                 <Link
                   to={`/results/${c.id}`}

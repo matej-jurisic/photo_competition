@@ -135,8 +135,8 @@ export default function ResultsPage() {
               {ratingEnded
                 ? 'Contest ended'
                 : uploadEnded
-                  ? `Rating open · closes ${new Date(results.contest.ratingEndDate).toLocaleDateString()}`
-                  : `Uploads until ${new Date(results.contest.uploadEndDate).toLocaleDateString()}`}
+                  ? `Rating open · closes ${new Date(results.contest.ratingEndDate).toLocaleDateString('en-GB')}`
+                  : `Uploads until ${new Date(results.contest.uploadEndDate).toLocaleDateString('en-GB')}`}
             </p>
           </div>
         </div>

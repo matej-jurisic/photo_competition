@@ -147,7 +147,7 @@ export default function JudgePage() {
       <div className="max-w-5xl mx-auto px-6 py-8">
         {isNotYetOpen && (
           <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-800 rounded-xl p-4 text-sm">
-            Rating opens after the upload deadline on {new Date(contest.uploadEndDate).toLocaleDateString()}.
+            Rating opens after the upload deadline on {new Date(contest.uploadEndDate).toLocaleDateString('en-GB')}.
           </div>
         )}
 

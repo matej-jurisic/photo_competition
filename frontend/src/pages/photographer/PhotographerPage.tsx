@@ -112,8 +112,8 @@ export default function PhotographerPage() {
             </div>
           )}
           <div className="flex flex-col gap-1 text-xs text-gray-400">
-            <span>Upload deadline: {new Date(session.contest.uploadEndDate).toLocaleDateString()}</span>
-            <span>Judging closes: {new Date(session.contest.ratingEndDate).toLocaleDateString()}</span>
+            <span>Upload deadline: {new Date(session.contest.uploadEndDate).toLocaleDateString('en-GB')}</span>
+            <span>Judging closes: {new Date(session.contest.ratingEndDate).toLocaleDateString('en-GB')}</span>
           </div>
         </div>
 

@@ -68,7 +68,7 @@ export default function ContestDetail() {
             </div>
           )}
           <p className="text-xs text-gray-400 mt-1">
-            Uploads until {new Date(contest.uploadEndDate).toLocaleDateString()} · Ratings until {new Date(contest.ratingEndDate).toLocaleDateString()}
+            Uploads until {new Date(contest.uploadEndDate).toLocaleDateString('en-GB')} · Ratings until {new Date(contest.ratingEndDate).toLocaleDateString('en-GB')}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
