@@ -44,7 +44,7 @@ export default function ContestList() {
           const ratingEnded = now > new Date(c.ratingEndDate)
           const phase = c.isCompleted ? 'completed' : ratingEnded ? 'ended' : uploadEnded ? 'rating' : 'upload'
           return (
-            <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4">
+            <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4 overflow-hidden">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0 flex-wrap">
                   <span className="font-semibold text-gray-900 truncate">{c.name}</span>
