@@ -9,8 +9,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { api } from "../../api/client";
-import type { Topic } from "../../api/types";
+import type { Photo, Topic } from "../../api/types";
 
 const BADGE_OPTIONS = [
     "Majstorstvo boja",
@@ -32,6 +33,7 @@ export default function JudgePage() {
     // photoId -> badgeName (at most one badge per photo, at most 3 total)
     const [badges, setBadges] = useState<Record<number, string>>({});
     const [saved, setSaved] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<Photo | undefined>();
 
     const {
         data: session,
@@ -63,6 +65,18 @@ export default function JudgePage() {
             setBadges(init);
         }
     }, [session]);
+
+    useEffect(() => {
+        if (selectedImage) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "unset";
+        }
+
+        return () => {
+            document.body.style.overflow = "unset";
+        };
+    }, [selectedImage]);
 
     const submit = useMutation({
         mutationFn: async () => {
@@ -302,7 +316,14 @@ export default function JudgePage() {
 
                                                     return (
                                                         <div key={photo.id}>
-                                                            <div className="w-full aspect-[4/3] rounded-lg overflow-hidden flex items-center justify-center">
+                                                            <div
+                                                                className="w-full aspect-[4/3] rounded-lg overflow-hidden flex items-center justify-center"
+                                                                onClick={() =>
+                                                                    setSelectedImage(
+                                                                        photo,
+                                                                    )
+                                                                }
+                                                            >
                                                                 <img
                                                                     src={`${BASE}${photo.imageUrl}`}
                                                                     alt={
@@ -474,6 +495,39 @@ export default function JudgePage() {
                     </div>
                 )}
             </div>
+            {selectedImage && (
+                <div className="fixed inset-0 z-[1000] bg-black/90 flex items-center justify-center">
+                    {/* Close Button */}
+                    <button
+                        onClick={() => setSelectedImage(undefined)}
+                        className="absolute top-4 right-4 z-[1001] text-white bg-black/50 hover:bg-black/70 w-10 h-10 rounded-full flex items-center justify-center leading-none"
+                    >
+                        ✕
+                    </button>
+                    <TransformWrapper
+                        initialScale={1}
+                        minScale={1}
+                        maxScale={4}
+                    >
+                        <TransformComponent
+                            wrapperStyle={{ width: "100%", height: "100%" }}
+                            contentStyle={{
+                                width: "100%",
+                                height: "100%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                        >
+                            <img
+                                src={`${BASE}${selectedImage.imageUrl}`}
+                                alt={selectedImage.title ?? ""}
+                                className="max-w-full max-h-full object-contain"
+                            />
+                        </TransformComponent>
+                    </TransformWrapper>
+                </div>
+            )}
         </div>
     );
 }
