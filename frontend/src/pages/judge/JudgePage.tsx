@@ -13,14 +13,6 @@ import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { api } from "../../api/client";
 import type { Photo, Topic } from "../../api/types";
 
-const BADGE_OPTIONS = [
-    "Majstorstvo boja",
-    "Originalna ideja",
-    "Savršen trenutak",
-    "Nasmijalo me",
-    "Skriveni dragulj",
-];
-
 interface LocalRating {
     photoId: number;
     score: number;
@@ -134,6 +126,7 @@ export default function JudgePage() {
     );
     const ratedCount = Object.keys(ratings).length;
     const badgeCount = Object.keys(badges).length;
+    const totalBadgesAllowed = contest.badges.reduce((s, b) => s + b.allowedCount, 0);
 
     function setRating(photoId: number, score: number, comment: string) {
         setRatings((prev) => ({
@@ -146,16 +139,17 @@ export default function JudgePage() {
         setBadges((prev) => {
             const current = prev[photoId];
             if (current === badgeName) {
-                // Remove badge from this photo
                 const next = { ...prev };
                 delete next[photoId];
                 return next;
             }
-            if (current) {
-                // Replace existing badge on this photo
-                return { ...prev, [photoId]: badgeName };
-            }
-            if (badgeCount >= 3) return prev; // limit reached
+            const config = contest.badges.find(b => b.name === badgeName);
+            if (!config) return prev;
+            // Count uses of this badge on other photos
+            const usedElsewhere = Object.entries(prev).filter(
+                ([pid, bn]) => bn === badgeName && Number(pid) !== photoId
+            ).length;
+            if (usedElsewhere >= config.allowedCount) return prev;
             return { ...prev, [photoId]: badgeName };
         });
     }
@@ -180,10 +174,12 @@ export default function JudgePage() {
                         <span className="text-sm text-gray-500">
                             {ratedCount}/{totalPhotos} rated
                         </span>
-                        <span className="text-sm text-gray-500 flex items-center gap-1">
-                            <Award size={14} className="text-indigo-400" />
-                            {badgeCount}/3 badges
-                        </span>
+                        {totalBadgesAllowed > 0 && (
+                            <span className="text-sm text-gray-500 flex items-center gap-1">
+                                <Award size={14} className="text-indigo-400" />
+                                {badgeCount}/{totalBadgesAllowed} badges
+                            </span>
+                        )}
                         {!isEnded && !isNotYetOpen && (
                             <button
                                 onClick={() => submit.mutate()}
@@ -252,7 +248,7 @@ export default function JudgePage() {
                     </div>
                 )}
 
-                {!isEnded && !isNotYetOpen && (
+                {!isEnded && !isNotYetOpen && contest.badges.length > 0 && (
                     <div className="mb-6 bg-purple-50 border border-purple-200 rounded-xl p-4 flex items-start gap-3">
                         <Award
                             size={18}
@@ -262,12 +258,17 @@ export default function JudgePage() {
                             <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">
                                 Special Badges
                             </span>
-                            <p className="text-sm text-purple-900 mt-0.5">
-                                You can award up to{" "}
-                                <strong>3 special badges</strong> to photos that
-                                deserve recognition beyond their score. Each
-                                photo can receive one badge.
-                            </p>
+                            <ul className="mt-1 space-y-0.5">
+                                {contest.badges.map(b => {
+                                    const used = Object.values(badges).filter(bn => bn === b.name).length;
+                                    return (
+                                        <li key={b.name} className="text-sm text-purple-900 flex items-center gap-1.5">
+                                            <Award size={11} className="text-purple-400 flex-shrink-0" />
+                                            <span><strong>{b.name}</strong> — {used}/{b.allowedCount} used</span>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
                         </div>
                     </div>
                 )}
@@ -307,12 +308,6 @@ export default function JudgePage() {
                                                     const r = ratings[photo.id];
                                                     const assignedBadge =
                                                         badges[photo.id];
-                                                    const canAssignBadge =
-                                                        !isEnded &&
-                                                        !isNotYetOpen &&
-                                                        (!assignedBadge
-                                                            ? badgeCount < 3
-                                                            : true);
 
                                                     return (
                                                         <div key={photo.id}>
@@ -411,52 +406,35 @@ export default function JudgePage() {
                                                                     className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:bg-gray-50 disabled:text-gray-400 mb-2"
                                                                 />
                                                                 {/* Badge row */}
+                                                                {contest.badges.length > 0 && (
                                                                 <div className="flex flex-wrap gap-1.5 mt-1">
-                                                                    {BADGE_OPTIONS.map(
-                                                                        (
-                                                                            badge,
-                                                                        ) => {
-                                                                            const isSelected =
-                                                                                assignedBadge ===
-                                                                                badge;
+                                                                    {contest.badges.map(b => {
+                                                                            const isSelected = assignedBadge === b.name;
+                                                                            const usedElsewhere = Object.entries(badges).filter(
+                                                                                ([pid, bn]) => bn === b.name && Number(pid) !== photo.id
+                                                                            ).length;
                                                                             const isDisabled =
                                                                                 isEnded ||
                                                                                 isNotYetOpen ||
-                                                                                (!isSelected &&
-                                                                                    !canAssignBadge);
+                                                                                (!isSelected && usedElsewhere >= b.allowedCount);
                                                                             return (
                                                                                 <button
-                                                                                    key={
-                                                                                        badge
-                                                                                    }
-                                                                                    disabled={
-                                                                                        isDisabled
-                                                                                    }
-                                                                                    onClick={() =>
-                                                                                        toggleBadge(
-                                                                                            photo.id,
-                                                                                            badge,
-                                                                                        )
-                                                                                    }
+                                                                                    key={b.name}
+                                                                                    disabled={isDisabled}
+                                                                                    onClick={() => toggleBadge(photo.id, b.name)}
                                                                                     className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                                                                                         isSelected
                                                                                             ? "bg-purple-600 text-white border-purple-600"
                                                                                             : "border-gray-200 text-gray-500 hover:border-purple-400 hover:text-purple-600"
                                                                                     }`}
                                                                                 >
-                                                                                    <Award
-                                                                                        size={
-                                                                                            10
-                                                                                        }
-                                                                                    />
-                                                                                    {
-                                                                                        badge
-                                                                                    }
+                                                                                    <Award size={10} />
+                                                                                    {b.name}
                                                                                 </button>
                                                                             );
-                                                                        },
-                                                                    )}
+                                                                        })}
                                                                 </div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     );

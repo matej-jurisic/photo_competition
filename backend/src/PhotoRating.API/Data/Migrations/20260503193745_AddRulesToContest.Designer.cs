@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PhotoRating.API.Data;
@@ -12,9 +13,11 @@ using PhotoRating.API.Data;
 namespace PhotoRating.API.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260503193745_AddRulesToContest")]
+    partial class AddRulesToContest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -82,37 +85,15 @@ namespace PhotoRating.API.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text[]");
 
+                    b.Property<string>("Rules")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("UploadEndDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
                     b.ToTable("Contests");
-                });
-
-            modelBuilder.Entity("PhotoRating.API.Models.ContestBadge", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AllowedCount")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ContestId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContestId");
-
-                    b.ToTable("ContestBadges");
                 });
 
             modelBuilder.Entity("PhotoRating.API.Models.Judge", b =>
@@ -290,17 +271,6 @@ namespace PhotoRating.API.Data.Migrations
                     b.Navigation("Photo");
                 });
 
-            modelBuilder.Entity("PhotoRating.API.Models.ContestBadge", b =>
-                {
-                    b.HasOne("PhotoRating.API.Models.Contest", "Contest")
-                        .WithMany("Badges")
-                        .HasForeignKey("ContestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Contest");
-                });
-
             modelBuilder.Entity("PhotoRating.API.Models.Judge", b =>
                 {
                     b.HasOne("PhotoRating.API.Models.Contest", "Contest")
@@ -374,8 +344,6 @@ namespace PhotoRating.API.Data.Migrations
 
             modelBuilder.Entity("PhotoRating.API.Models.Contest", b =>
                 {
-                    b.Navigation("Badges");
-
                     b.Navigation("Judges");
 
                     b.Navigation("Photographers");

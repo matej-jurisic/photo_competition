@@ -20,6 +20,8 @@ public class JudgeSessionController(AppDbContext db) : ControllerBase
                 .ThenInclude(c => c.Topics)
             .Include(j => j.Contest)
                 .ThenInclude(c => c.Judges)
+            .Include(j => j.Contest)
+                .ThenInclude(c => c.Badges)
             .Include(j => j.Ratings)
             .FirstOrDefaultAsync(j => j.Token == token);
 
@@ -34,7 +36,8 @@ public class JudgeSessionController(AppDbContext db) : ControllerBase
             )).ToList(),
             contest.Topics.OrderBy(t => t.OrderIndex)
                 .Select(t => new TopicDto(t.Id, t.Name, t.ContestId, t.OrderIndex)).ToList(),
-            contest.Judges.Select(j => new JudgeDto(j.Id, j.Name, j.Email, j.Token, j.ContestId, j.CreatedAt)).ToList()
+            contest.Judges.Select(j => new JudgeDto(j.Id, j.Name, j.Email, j.Token, j.ContestId, j.CreatedAt)).ToList(),
+            contest.Badges.Select(b => new ContestBadgeDto(b.Id, b.Name, b.AllowedCount)).ToList()
         );
 
         var ratings = judge.Ratings
@@ -104,25 +107,30 @@ public class JudgeSessionController(AppDbContext db) : ControllerBase
     [HttpPost("badges")]
     public async Task<ActionResult<List<BadgeDto>>> SetBadges(Guid token, SetBadgesDto dto)
     {
-        var validBadges = new[] { "Majstorstvo boja", "Originalna ideja", "Savršen trenutak", "Nasmijalo me", "Skriveni dragulj" };
-
-        if (dto.Badges.Count > 3)
-            return BadRequest("You can assign at most 3 badges.");
-
-        if (dto.Badges.Any(b => !validBadges.Contains(b.BadgeName)))
-            return BadRequest("Invalid badge name.");
-
         if (dto.Badges.Select(b => b.PhotoId).Distinct().Count() != dto.Badges.Count)
             return BadRequest("Each photo can only receive one badge.");
 
         var judge = await db.Judges
-            .Include(j => j.Contest)
+            .Include(j => j.Contest).ThenInclude(c => c.Badges)
             .FirstOrDefaultAsync(j => j.Token == token);
 
         if (judge is null) return NotFound();
 
         if (judge.Contest.IsCompleted || DateTime.UtcNow > judge.Contest.RatingEndDate)
             return BadRequest("Contest is closed.");
+
+        var contestBadges = judge.Contest.Badges;
+        var validNames = contestBadges.Select(b => b.Name).ToHashSet();
+
+        if (dto.Badges.Any(b => !validNames.Contains(b.BadgeName)))
+            return BadRequest("Invalid badge name.");
+
+        foreach (var group in dto.Badges.GroupBy(b => b.BadgeName))
+        {
+            var config = contestBadges.First(cb => cb.Name == group.Key);
+            if (group.Count() > config.AllowedCount)
+                return BadRequest($"Badge '{group.Key}' can be used at most {config.AllowedCount} time(s).");
+        }
 
         var existing = await db.Badges.Where(b => b.JudgeId == judge.Id).ToListAsync();
         db.Badges.RemoveRange(existing);

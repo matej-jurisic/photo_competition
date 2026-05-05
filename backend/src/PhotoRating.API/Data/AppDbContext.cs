@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Judge> Judges => Set<Judge>();
     public DbSet<Rating> Ratings => Set<Rating>();
     public DbSet<Badge> Badges => Set<Badge>();
+    public DbSet<ContestBadge> ContestBadges => Set<ContestBadge>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -41,6 +42,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne(b => b.Photo)
             .WithMany()
             .HasForeignKey(b => b.PhotoId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        model.Entity<ContestBadge>()
+            .HasOne(cb => cb.Contest)
+            .WithMany(c => c.Badges)
+            .HasForeignKey(cb => cb.ContestId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

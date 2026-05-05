@@ -13,6 +13,7 @@ export default function ContestForm() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [rewards, setRewards] = useState<string[]>([])
+  const [badges, setBadges] = useState<{ name: string; allowedCount: number }[]>([])
   const [uploadEndDate, setUploadEndDate] = useState('')
   const [ratingEndDate, setRatingEndDate] = useState('')
   const [error, setError] = useState('')
@@ -28,19 +29,20 @@ export default function ContestForm() {
       setName(existing.name)
       setDescription(existing.description ?? '')
       setRewards(existing.rewards ?? [])
+      setBadges(existing.badges.map(b => ({ name: b.name, allowedCount: b.allowedCount })))
       setUploadEndDate(existing.uploadEndDate.slice(0, 10))
       setRatingEndDate(existing.ratingEndDate.slice(0, 10))
     }
   }, [existing])
 
   const create = useMutation({
-    mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[] }) => api.contests.create(d),
+    mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[]; badges: { name: string; allowedCount: number }[] }) => api.contests.create(d),
     onSuccess: c => { qc.invalidateQueries({ queryKey: ['contests'] }); navigate(`/admin/contests/${c.id}`) },
     onError: () => setError('Failed to save. Check your admin key.'),
   })
 
   const update = useMutation({
-    mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[] }) => api.contests.update(Number(id), d),
+    mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[]; badges: { name: string; allowedCount: number }[] }) => api.contests.update(Number(id), d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['contests'] }); navigate(`/admin/contests/${id}`) },
     onError: () => setError('Failed to save.'),
   })
@@ -59,6 +61,7 @@ export default function ContestForm() {
       name: name.trim(),
       description: description.trim(),
       rewards: rewards.map(r => r.trim()).filter(r => r.length > 0),
+      badges: badges.filter(b => b.name.trim().length > 0).map(b => ({ name: b.name.trim(), allowedCount: b.allowedCount })),
       uploadEndDate: new Date(uploadEndDate).toISOString(),
       ratingEndDate: new Date(ratingEndDate).toISOString(),
     }
@@ -119,6 +122,44 @@ export default function ContestForm() {
               className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 self-start"
             >
               <Plus size={15} /> Add reward
+            </button>
+          </div>
+        </div>
+        <div>
+          <span className="text-sm font-medium text-gray-700">Special Badges</span>
+          <p className="text-xs text-gray-500 mt-0.5 mb-1">Judges can award these badges to photos. Set the name and how many times each badge can be used per judge.</p>
+          <div className="flex flex-col gap-2">
+            {badges.map((b, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <input
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Badge name"
+                  value={b.name}
+                  onChange={e => setBadges(badges.map((v, j) => j === i ? { ...v, name: e.target.value } : v))}
+                />
+                <input
+                  type="number"
+                  min={1}
+                  className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  title="Allowed uses per judge"
+                  value={b.allowedCount}
+                  onChange={e => setBadges(badges.map((v, j) => j === i ? { ...v, allowedCount: Math.max(1, Number(e.target.value)) } : v))}
+                />
+                <button
+                  type="button"
+                  onClick={() => setBadges(badges.filter((_, j) => j !== i))}
+                  className="p-2 text-gray-400 hover:text-red-500"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setBadges([...badges, { name: '', allowedCount: 1 }])}
+              className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 self-start"
+            >
+              <Plus size={15} /> Add badge
             </button>
           </div>
         </div>

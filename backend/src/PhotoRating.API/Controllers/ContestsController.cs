@@ -25,6 +25,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
             .Include(c => c.Photographers).ThenInclude(p => p.Photos)
             .Include(c => c.Topics)
             .Include(c => c.Judges)
+            .Include(c => c.Badges)
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (contest is null) return NotFound();
@@ -37,6 +38,11 @@ public class ContestsController(AppDbContext db) : ControllerBase
         var contest = new Contest { Name = dto.Name, Description = dto.Description, UploadEndDate = dto.UploadEndDate, RatingEndDate = dto.RatingEndDate, Rewards = dto.Rewards };
         db.Contests.Add(contest);
         await db.SaveChangesAsync();
+
+        foreach (var b in dto.Badges)
+            db.ContestBadges.Add(new ContestBadge { ContestId = contest.Id, Name = b.Name, AllowedCount = b.AllowedCount });
+        await db.SaveChangesAsync();
+
         return CreatedAtAction(nameof(GetById), new { id = contest.Id },
             new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted));
     }
@@ -52,6 +58,12 @@ public class ContestsController(AppDbContext db) : ControllerBase
         contest.UploadEndDate = dto.UploadEndDate;
         contest.RatingEndDate = dto.RatingEndDate;
         contest.Rewards = dto.Rewards;
+
+        var existingBadges = await db.ContestBadges.Where(b => b.ContestId == id).ToListAsync();
+        db.ContestBadges.RemoveRange(existingBadges);
+        foreach (var b in dto.Badges)
+            db.ContestBadges.Add(new ContestBadge { ContestId = id, Name = b.Name, AllowedCount = b.AllowedCount });
+
         await db.SaveChangesAsync();
         return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted);
     }
@@ -83,6 +95,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
             p.Photos.Select(ph => new PhotoDto(ph.Id, ph.Title, ph.ImageUrl, ph.PhotographerId, ph.TopicId)).ToList()
         )).ToList(),
         c.Topics.OrderBy(t => t.OrderIndex).Select(t => new TopicDto(t.Id, t.Name, t.ContestId, t.OrderIndex)).ToList(),
-        c.Judges.Select(j => new JudgeDto(j.Id, j.Name, j.Email, j.Token, j.ContestId, j.CreatedAt)).ToList()
+        c.Judges.Select(j => new JudgeDto(j.Id, j.Name, j.Email, j.Token, j.ContestId, j.CreatedAt)).ToList(),
+        c.Badges.Select(b => new ContestBadgeDto(b.Id, b.Name, b.AllowedCount)).ToList()
     );
 }

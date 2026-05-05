@@ -36,7 +36,7 @@ public class PhotographerSessionController(AppDbContext db, IConfiguration confi
             .FirstOrDefaultAsync(p => p.Token == token);
 
         if (p is null) return NotFound();
-        if (DateTime.UtcNow > p.Contest.UploadEndDate) return BadRequest("Upload period has ended.");
+        if (DateTime.UtcNow >= p.Contest.UploadEndDate) return BadRequest("Upload period has ended.");
         if (!await db.Topics.AnyAsync(t => t.Id == topicId && t.ContestId == p.ContestId))
             return BadRequest("Topic not found in this contest.");
 

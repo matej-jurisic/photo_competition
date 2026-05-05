@@ -1,14 +1,17 @@
 namespace PhotoRating.API.Models;
 
 // Contest
-public record CreateContestDto(string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, List<string> Rewards);
-public record UpdateContestDto(string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, List<string> Rewards);
+public record ContestBadgeDto(int Id, string Name, int AllowedCount);
+public record ContestBadgeInputDto(string Name, int AllowedCount);
+public record CreateContestDto(string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, List<string> Rewards, List<ContestBadgeInputDto> Badges);
+public record UpdateContestDto(string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, List<string> Rewards, List<ContestBadgeInputDto> Badges);
 public record ContestDto(int Id, string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, DateTime CreatedAt, List<string> Rewards, bool IsCompleted);
 public record ContestDetailDto(
     int Id, string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, DateTime CreatedAt, List<string> Rewards, bool IsCompleted,
     List<PhotographerWithPhotosDto> Photographers,
     List<TopicDto> Topics,
-    List<JudgeDto> Judges);
+    List<JudgeDto> Judges,
+    List<ContestBadgeDto> Badges);
 public record SetCompleteDto(bool IsCompleted);
 
 // Photographer

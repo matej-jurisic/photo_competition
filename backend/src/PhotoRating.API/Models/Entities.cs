@@ -14,6 +14,16 @@ public class Contest
     public List<Photographer> Photographers { get; set; } = [];
     public List<Topic> Topics { get; set; } = [];
     public List<Judge> Judges { get; set; } = [];
+    public List<ContestBadge> Badges { get; set; } = [];
+}
+
+public class ContestBadge
+{
+    public int Id { get; set; }
+    public int ContestId { get; set; }
+    public Contest Contest { get; set; } = null!;
+    public string Name { get; set; } = "";
+    public int AllowedCount { get; set; } = 1;
 }
 
 public class Photographer

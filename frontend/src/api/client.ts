@@ -24,9 +24,9 @@ export const api = {
   contests: {
     list: () => http.get<Contest[]>('/api/contests', { headers: adminHeaders() }).then(r => r.data),
     get: (id: number) => http.get<ContestDetail>(`/api/contests/${id}`, { headers: adminHeaders() }).then(r => r.data),
-    create: (data: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[] }) =>
+    create: (data: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[]; badges: { name: string; allowedCount: number }[] }) =>
       http.post<Contest>('/api/contests', data, { headers: adminHeaders() }).then(r => r.data),
-    update: (id: number, data: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[] }) =>
+    update: (id: number, data: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[]; badges: { name: string; allowedCount: number }[] }) =>
       http.put<Contest>(`/api/contests/${id}`, data, { headers: adminHeaders() }).then(r => r.data),
     delete: (id: number) =>
       http.delete(`/api/contests/${id}`, { headers: adminHeaders() }),

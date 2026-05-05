@@ -9,10 +9,17 @@ export interface Contest {
   createdAt: string
 }
 
+export interface ContestBadge {
+  id: number
+  name: string
+  allowedCount: number
+}
+
 export interface ContestDetail extends Contest {
   photographers: PhotographerWithPhotos[]
   topics: Topic[]
   judges: Judge[]
+  badges: ContestBadge[]
 }
 
 export interface Photographer {
