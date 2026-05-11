@@ -13,13 +13,13 @@ public class JudgeSessionController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<JudgeSessionDto>> GetSession(Guid token)
     {
         var judge = await db.Judges
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(j => j.Contest)
                 .ThenInclude(c => c.Photographers)
                 .ThenInclude(p => p.Photos)
             .Include(j => j.Contest)
                 .ThenInclude(c => c.Topics)
-            .Include(j => j.Contest)
-                .ThenInclude(c => c.Judges)
             .Include(j => j.Contest)
                 .ThenInclude(c => c.Badges)
             .Include(j => j.Ratings)
@@ -36,7 +36,7 @@ public class JudgeSessionController(AppDbContext db) : ControllerBase
             )).ToList(),
             contest.Topics.OrderBy(t => t.OrderIndex)
                 .Select(t => new TopicDto(t.Id, t.Name, t.ContestId, t.OrderIndex)).ToList(),
-            contest.Judges.Select(j => new JudgeDto(j.Id, j.Name, j.Email, j.Token, j.ContestId, j.CreatedAt)).ToList(),
+            [],
             contest.Badges.Select(b => new ContestBadgeDto(b.Id, b.Name, b.AllowedCount)).ToList()
         );
 
