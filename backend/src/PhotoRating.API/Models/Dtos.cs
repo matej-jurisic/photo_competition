@@ -52,6 +52,6 @@ public record SetBadgesDto(List<BadgeItemDto> Badges);
 public record BadgedPhotoDto(PhotoDto Photo, string PhotographerName, string TopicName, List<string> Badges);
 
 // Results
-public record PhotographerScoreDto(PhotographerDto Photographer, double AverageScore, int TotalRatings, int TotalPhotos, PhotoDto? TopPhoto);
+public record PhotographerScoreDto(PhotographerDto Photographer, double AverageScore, int TotalRatings, int TotalPhotos, PhotoDto? TopPhoto, List<string> Comments);
 public record TopicResultDto(TopicDto Topic, List<PhotographerScoreDto> Scores);
-public record ContestResultsDto(ContestDto Contest, List<TopicResultDto> Topics, PhotographerDto? Winner, double? WinnerScore, List<PhotographerDto> TiedPhotographers, List<BadgedPhotoDto> BadgedPhotos, List<PhotographerScoreDto> OverallScores);
+public record ContestResultsDto(ContestDto Contest, List<TopicResultDto> Topics, PhotographerDto? Winner, double? WinnerScore, List<PhotographerDto> TiedPhotographers, List<BadgedPhotoDto> BadgedPhotos, List<PhotographerScoreDto> OverallScores, int JudgeCount);

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Trophy, ArrowLeft, Star, Gift, Lock, Award, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { Trophy, ArrowLeft, Star, Gift, Lock, Award, ChevronLeft, ChevronRight, X, Users, Camera, UserCheck, MessageSquare } from 'lucide-react'
 import axios from 'axios'
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import { api } from '../../api/client'
@@ -34,7 +34,48 @@ function BadgeCarousel({ photos }: { photos: BadgedPhoto[] }) {
         <h2 className="font-bold text-gray-900">Special Badges</h2>
         <span className="ml-auto text-sm text-gray-400">{index + 1} / {photos.length}</span>
       </div>
-      <div className="flex items-stretch">
+
+      {/* Mobile: stacked */}
+      <div className="sm:hidden">
+        <img
+          src={`${BASE}${current.photo.imageUrl}`}
+          alt={current.photo.title ?? current.photographerName}
+          className="w-full h-52 object-cover"
+        />
+        <div className="px-5 pt-4 pb-2 flex flex-col gap-1.5">
+          <p className="font-semibold text-gray-900">{current.photographerName}</p>
+          <p className="text-xs text-gray-400">{current.topicName}</p>
+          {current.photo.title && (
+            <p className="text-sm text-gray-600 italic">"{current.photo.title}"</p>
+          )}
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {current.badges.map((badge, i) => (
+              <span key={i} className="flex items-center gap-1 text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-medium">
+                <Award size={10} />
+                {badge}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center justify-between px-3 py-3">
+          <button onClick={prev} disabled={photos.length <= 1} className="p-1.5 text-gray-400 hover:text-gray-700 disabled:opacity-20">
+            <ChevronLeft size={22} />
+          </button>
+          {photos.length > 1 && (
+            <div className="flex gap-1.5">
+              {photos.map((_, i) => (
+                <button key={i} onClick={() => setIndex(i)} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === index ? 'bg-purple-500' : 'bg-gray-200'}`} />
+              ))}
+            </div>
+          )}
+          <button onClick={next} disabled={photos.length <= 1} className="p-1.5 text-gray-400 hover:text-gray-700 disabled:opacity-20">
+            <ChevronRight size={22} />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop: side by side */}
+      <div className="hidden sm:flex items-stretch">
         <button onClick={prev} disabled={photos.length <= 1} className="px-3 text-gray-400 hover:text-gray-700 disabled:opacity-20 flex-shrink-0">
           <ChevronLeft size={22} />
         </button>
@@ -65,7 +106,7 @@ function BadgeCarousel({ photos }: { photos: BadgedPhoto[] }) {
         </button>
       </div>
       {photos.length > 1 && (
-        <div className="flex justify-center gap-1.5 pb-4">
+        <div className="hidden sm:flex justify-center gap-1.5 pb-4">
           {photos.map((_, i) => (
             <button key={i} onClick={() => setIndex(i)} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === index ? 'bg-purple-500' : 'bg-gray-200'}`} />
           ))}
@@ -150,7 +191,7 @@ export default function ResultsPage() {
         <div className="flex items-center gap-3 mb-8">
           <Trophy className="text-amber-500" size={28} />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{results.contest.name} — Results</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{results.contest.name} Results</h1>
             <p className="text-sm text-gray-500 mt-0.5">
               {ratingEnded
                 ? 'Contest ended'
@@ -160,6 +201,31 @@ export default function ResultsPage() {
             </p>
           </div>
         </div>
+
+        {/* Stats bar */}
+        {(() => {
+          const totalPhotos = results.topics.reduce((acc, t) => acc + t.scores.reduce((a, s) => a + s.totalPhotos, 0), 0)
+          const participantCount = results.overallScores.length
+          return (
+            <div className="flex items-center gap-0 rounded-2xl border border-gray-200 bg-white overflow-hidden mb-6 divide-x divide-gray-100">
+              <div className="flex-1 flex flex-col items-center py-4 gap-1">
+                <Users size={16} className="text-indigo-400" />
+                <span className="text-xl font-bold text-gray-900">{participantCount}</span>
+                <span className="text-xs text-gray-400">Photographers</span>
+              </div>
+              <div className="flex-1 flex flex-col items-center py-4 gap-1">
+                <Camera size={16} className="text-indigo-400" />
+                <span className="text-xl font-bold text-gray-900">{totalPhotos}</span>
+                <span className="text-xs text-gray-400">Photos</span>
+              </div>
+              <div className="flex-1 flex flex-col items-center py-4 gap-1">
+                <UserCheck size={16} className="text-indigo-400" />
+                <span className="text-xl font-bold text-gray-900">{results.judgeCount}</span>
+                <span className="text-xs text-gray-400">Judges</span>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Rewards */}
         {results.contest.rewards.length > 0 && (
@@ -213,9 +279,6 @@ export default function ResultsPage() {
           return null
         })()}
 
-        {/* Badge carousel */}
-        {results.badgedPhotos.length > 0 && <BadgeCarousel photos={results.badgedPhotos} />}
-
         {/* Overall ranking */}
         {results.overallScores.length > 0 && (
           <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
@@ -247,6 +310,9 @@ export default function ResultsPage() {
           </div>
         )}
 
+        {/* Badge carousel */}
+        {results.badgedPhotos.length > 0 && <BadgeCarousel photos={results.badgedPhotos} />}
+
         {/* Per-topic photo grids */}
         <div className="space-y-6">
           {results.topics.map(topicResult => {
@@ -262,6 +328,15 @@ export default function ResultsPage() {
               <div key={topicResult.topic.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                 <div className="px-6 pt-6 pb-6">
                   <h2 className="text-lg font-bold text-gray-900 mb-4">{topicResult.topic.name}</h2>
+                  {sorted.length >= 1 && sorted[0].totalRatings > 0 && (sorted.length === 1 || sorted[0].averageScore > sorted[1].averageScore) && (
+                    <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
+                      <Trophy size={16} className="text-amber-500 flex-shrink-0" />
+                      <span className="text-sm font-semibold text-amber-800">
+                        {sorted[0].photographer.name} wins this topic
+                      </span>
+                      <span className="ml-auto text-sm font-bold text-amber-600 flex items-center gap-1">{sorted[0].averageScore.toFixed(2)} <Star size={11} className="text-amber-400" fill="currentColor" /></span>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {sorted.map((s: PhotographerScore, idx) => {
                       const pct = topScore > 0 ? (s.averageScore / 10) * 100 : 0
@@ -314,6 +389,16 @@ export default function ResultsPage() {
                                 style={{ width: `${pct}%` }}
                               />
                             </div>
+                            {s.comments.length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                {s.comments.map((c, i) => (
+                                  <p key={i} className="text-xs text-gray-500 italic flex gap-1">
+                                    <MessageSquare size={10} className="text-gray-300 flex-shrink-0 mt-0.5" />
+                                    <span className="line-clamp-2">{c}</span>
+                                  </p>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       )

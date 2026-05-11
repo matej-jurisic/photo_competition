@@ -13,6 +13,8 @@ public class PhotographerSessionController(AppDbContext db, IConfiguration confi
     public async Task<ActionResult<PhotographerSessionDto>> GetSession(Guid token)
     {
         var p = await db.Photographers
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(p => p.Photos)
             .Include(p => p.Contest).ThenInclude(c => c.Topics)
             .FirstOrDefaultAsync(p => p.Token == token);

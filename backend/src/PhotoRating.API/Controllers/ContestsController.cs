@@ -22,6 +22,8 @@ public class ContestsController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<ContestDetailDto>> GetById(int id)
     {
         var contest = await db.Contests
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(c => c.Photographers).ThenInclude(p => p.Photos)
             .Include(c => c.Topics)
             .Include(c => c.Judges)

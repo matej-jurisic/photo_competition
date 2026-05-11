@@ -93,6 +93,7 @@ export interface PhotographerScore {
   totalRatings: number
   totalPhotos: number
   topPhoto: Photo | null
+  comments: string[]
 }
 
 export interface TopicResult {
@@ -115,4 +116,5 @@ export interface ContestResults {
   tiedPhotographers: Photographer[]
   badgedPhotos: BadgedPhoto[]
   overallScores: PhotographerScore[]
+  judgeCount: number
 }

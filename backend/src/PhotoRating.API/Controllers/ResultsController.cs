@@ -13,6 +13,8 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
     public async Task<ActionResult<ContestResultsDto>> GetResults(int contestId, [FromHeader(Name = "X-Admin-Key")] string? adminKey)
     {
         var contest = await db.Contests
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(c => c.Photographers)
             .Include(c => c.Topics)
             .Include(c => c.Judges)
@@ -28,6 +30,7 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
         }
 
         var photos = await db.Photos
+            .AsNoTracking()
             .Where(p => p.Photographer.ContestId == contestId)
             .Include(p => p.Ratings)
             .ToListAsync();
@@ -46,12 +49,17 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
                         var topPhoto = photographerPhotos
                             .OrderByDescending(p => p.Ratings.Any() ? p.Ratings.Average(r => r.Score) : 0)
                             .First();
+                        var comments = allRatings
+                            .Where(r => !string.IsNullOrWhiteSpace(r.Comment))
+                            .Select(r => r.Comment!)
+                            .ToList();
                         return new PhotographerScoreDto(
                             new PhotographerDto(photographer.Id, photographer.Name, photographer.Bio, photographer.ContestId, photographer.Token),
                             allRatings.Count > 0 ? allRatings.Average(r => r.Score) : 0,
                             allRatings.Count,
                             photographerPhotos.Count,
-                            new PhotoDto(topPhoto.Id, topPhoto.Title, topPhoto.ImageUrl, topPhoto.PhotographerId, topPhoto.TopicId)
+                            new PhotoDto(topPhoto.Id, topPhoto.Title, topPhoto.ImageUrl, topPhoto.PhotographerId, topPhoto.TopicId),
+                            comments
                         );
                     })
                     .Where(s => s is not null)
@@ -79,7 +87,8 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
                     allRatings.Count > 0 ? allRatings.Average(r => r.Score) : 0,
                     allRatings.Count,
                     photographerPhotos.Count,
-                    new PhotoDto(topPhoto.Id, topPhoto.Title, topPhoto.ImageUrl, topPhoto.PhotographerId, topPhoto.TopicId)
+                    new PhotoDto(topPhoto.Id, topPhoto.Title, topPhoto.ImageUrl, topPhoto.PhotographerId, topPhoto.TopicId),
+                    []
                 );
             })
             .Where(s => s is not null)
@@ -130,6 +139,6 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
         var winnerScore = winner is null ? (double?)null : overallScoreDtos.First(x => x.Photographer.Id == winner.Id).AverageScore;
         var tiedDtos = tiedPhotographers.Select(p => new PhotographerDto(p.Id, p.Name, p.Bio, p.ContestId, p.Token)).ToList();
 
-        return new ContestResultsDto(contestDto, topicResults, winnerDto, winnerScore, tiedDtos, badgedPhotos, overallScoreDtos);
+        return new ContestResultsDto(contestDto, topicResults, winnerDto, winnerScore, tiedDtos, badgedPhotos, overallScoreDtos, contest.Judges.Count);
     }
 }
