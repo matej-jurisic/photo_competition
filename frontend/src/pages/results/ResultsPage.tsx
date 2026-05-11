@@ -27,6 +27,12 @@ function BadgeCarousel({ photos }: { photos: BadgedPhoto[] }) {
   const next = () => setIndex(i => (i + 1) % photos.length)
   const current = photos[index]
 
+  const badgeCounts = current.badges.reduce<Record<string, number>>((acc, b) => {
+    acc[b] = (acc[b] ?? 0) + 1
+    return acc
+  }, {})
+  const uniqueBadges = Object.entries(badgeCounts)
+
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
       <div className="px-6 pt-5 pb-3 flex items-center gap-2 border-b border-gray-100">
@@ -42,17 +48,17 @@ function BadgeCarousel({ photos }: { photos: BadgedPhoto[] }) {
           alt={current.photo.title ?? current.photographerName}
           className="w-full h-52 object-cover"
         />
-        <div className="px-5 pt-4 pb-2 flex flex-col gap-1.5">
+        <div className="px-5 pt-4 pb-2 flex flex-col gap-1.5 min-h-[9rem]">
           <p className="font-semibold text-gray-900">{current.photographerName}</p>
           <p className="text-xs text-gray-400">{current.topicName}</p>
           {current.photo.title && (
             <p className="text-sm text-gray-600 italic">"{current.photo.title}"</p>
           )}
           <div className="flex flex-wrap gap-1.5 mt-1">
-            {current.badges.map((badge, i) => (
-              <span key={i} className="flex items-center gap-1 text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-medium">
+            {uniqueBadges.map(([badge, count]) => (
+              <span key={badge} className="flex items-center gap-1 text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-medium">
                 <Award size={10} />
-                {badge}
+                {badge}{count > 1 && <span className="text-purple-500 font-bold">{count}×</span>}
               </span>
             ))}
           </div>
@@ -85,17 +91,17 @@ function BadgeCarousel({ photos }: { photos: BadgedPhoto[] }) {
             alt={current.photo.title ?? current.photographerName}
             className="w-40 h-28 object-cover rounded-xl flex-shrink-0"
           />
-          <div className="min-w-0 flex flex-col gap-2 pt-1">
+          <div className="min-w-0 flex flex-col gap-2 pt-1 min-h-[7rem]">
             <p className="font-semibold text-gray-900 truncate">{current.photographerName}</p>
             <p className="text-xs text-gray-400">{current.topicName}</p>
             {current.photo.title && (
               <p className="text-sm text-gray-600 italic truncate">"{current.photo.title}"</p>
             )}
             <div className="flex flex-wrap gap-1.5 mt-1">
-              {current.badges.map((badge, i) => (
-                <span key={i} className="flex items-center gap-1 text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-medium">
+              {uniqueBadges.map(([badge, count]) => (
+                <span key={badge} className="flex items-center gap-1 text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-medium">
                   <Award size={10} />
-                  {badge}
+                  {badge}{count > 1 && <span className="text-purple-500 font-bold">{count}×</span>}
                 </span>
               ))}
             </div>
