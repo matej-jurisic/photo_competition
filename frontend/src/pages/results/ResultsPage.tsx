@@ -1,12 +1,23 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Trophy, ArrowLeft, Star, Gift, Lock, Award, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Trophy, ArrowLeft, Star, Gift, Lock, Award, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import axios from 'axios'
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import { api } from '../../api/client'
-import type { PhotographerScore, BadgedPhoto } from '../../api/types'
+import type { PhotographerScore, BadgedPhoto, Photo } from '../../api/types'
 
 const BASE = import.meta.env.VITE_API_URL ?? ''
+
+const RANK_BADGE = [
+  'bg-amber-400 text-white',
+  'bg-gray-400 text-white',
+  'bg-amber-700 text-white',
+]
+
+function rankBadgeClass(idx: number) {
+  return RANK_BADGE[idx] ?? 'bg-white/80 text-gray-600'
+}
 
 function BadgeCarousel({ photos }: { photos: BadgedPhoto[] }) {
   const [index, setIndex] = useState(0)
@@ -24,14 +35,9 @@ function BadgeCarousel({ photos }: { photos: BadgedPhoto[] }) {
         <span className="ml-auto text-sm text-gray-400">{index + 1} / {photos.length}</span>
       </div>
       <div className="flex items-stretch">
-        <button
-          onClick={prev}
-          disabled={photos.length <= 1}
-          className="px-3 text-gray-400 hover:text-gray-700 disabled:opacity-20 flex-shrink-0"
-        >
+        <button onClick={prev} disabled={photos.length <= 1} className="px-3 text-gray-400 hover:text-gray-700 disabled:opacity-20 flex-shrink-0">
           <ChevronLeft size={22} />
         </button>
-
         <div className="flex-1 py-5 flex gap-5 items-start min-w-0">
           <img
             src={`${BASE}${current.photo.imageUrl}`}
@@ -46,10 +52,7 @@ function BadgeCarousel({ photos }: { photos: BadgedPhoto[] }) {
             )}
             <div className="flex flex-wrap gap-1.5 mt-1">
               {current.badges.map((badge, i) => (
-                <span
-                  key={i}
-                  className="flex items-center gap-1 text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-medium"
-                >
+                <span key={i} className="flex items-center gap-1 text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-medium">
                   <Award size={10} />
                   {badge}
                 </span>
@@ -57,25 +60,14 @@ function BadgeCarousel({ photos }: { photos: BadgedPhoto[] }) {
             </div>
           </div>
         </div>
-
-        <button
-          onClick={next}
-          disabled={photos.length <= 1}
-          className="px-3 text-gray-400 hover:text-gray-700 disabled:opacity-20 flex-shrink-0"
-        >
+        <button onClick={next} disabled={photos.length <= 1} className="px-3 text-gray-400 hover:text-gray-700 disabled:opacity-20 flex-shrink-0">
           <ChevronRight size={22} />
         </button>
       </div>
-
-      {/* Dot indicators */}
       {photos.length > 1 && (
         <div className="flex justify-center gap-1.5 pb-4">
           {photos.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setIndex(i)}
-              className={`w-1.5 h-1.5 rounded-full transition-colors ${i === index ? 'bg-purple-500' : 'bg-gray-200'}`}
-            />
+            <button key={i} onClick={() => setIndex(i)} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === index ? 'bg-purple-500' : 'bg-gray-200'}`} />
           ))}
         </div>
       )}
@@ -83,8 +75,35 @@ function BadgeCarousel({ photos }: { photos: BadgedPhoto[] }) {
   )
 }
 
+function Lightbox({ photo, onClose }: { photo: Photo; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[1000] bg-black/90 flex items-center justify-center" onClick={onClose}>
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-[1001] text-white bg-black/50 hover:bg-black/70 w-10 h-10 rounded-full flex items-center justify-center"
+      >
+        <X size={18} />
+      </button>
+      <TransformWrapper initialScale={1} minScale={1} maxScale={4}>
+        <TransformComponent
+          wrapperStyle={{ width: '100vw', height: '100vh' }}
+          contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <img
+            src={`${BASE}${photo.imageUrl}`}
+            alt={photo.title ?? ''}
+            className="max-w-full max-h-full object-contain"
+            onClick={e => e.stopPropagation()}
+          />
+        </TransformComponent>
+      </TransformWrapper>
+    </div>
+  )
+}
+
 export default function ResultsPage() {
   const { contestId } = useParams<{ contestId: string }>()
+  const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null)
 
   const { data: results, isLoading, error } = useQuery({
     queryKey: ['results', contestId],
@@ -119,6 +138,7 @@ export default function ResultsPage() {
   const now = new Date()
   const uploadEnded = now > new Date(results.contest.uploadEndDate)
   const ratingEnded = now > new Date(results.contest.ratingEndDate)
+  const hasAnyRatings = results.overallScores.some(s => s.totalRatings > 0)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -158,12 +178,10 @@ export default function ResultsPage() {
           </div>
         )}
 
-        {/* Overall winner */}
-        {(() => {
-          const hasScores = results.topics.some(t => t.scores.some(s => s.totalRatings > 0))
-          if (!hasScores) return null
+        {/* Overall winner banner */}
+        {hasAnyRatings && (() => {
           if (results.winner) return (
-            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-6 mb-8 flex items-center justify-between gap-4">
+            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-6 mb-6 flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <Trophy size={36} className="text-amber-500 flex-shrink-0" />
                 <div>
@@ -181,8 +199,8 @@ export default function ResultsPage() {
               )}
             </div>
           )
-          return (
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8 flex items-center gap-4">
+          if (results.tiedPhotographers.length > 0) return (
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-6 flex items-center gap-4">
               <Trophy size={36} className="text-gray-400 flex-shrink-0" />
               <div>
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Overall Result — Tie</div>
@@ -192,83 +210,110 @@ export default function ResultsPage() {
               </div>
             </div>
           )
+          return null
         })()}
 
         {/* Badge carousel */}
-        {results.badgedPhotos.length > 0 && (
-          <BadgeCarousel photos={results.badgedPhotos} />
+        {results.badgedPhotos.length > 0 && <BadgeCarousel photos={results.badgedPhotos} />}
+
+        {/* Overall ranking */}
+        {results.overallScores.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+              <Trophy size={16} className="text-amber-500" />
+              <h2 className="font-bold text-gray-900">Overall Ranking</h2>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {results.overallScores.map((s: PhotographerScore, idx) => (
+                <div key={s.photographer.id} className="flex items-center gap-4 px-6 py-3">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${rankBadgeClass(idx)}`}>
+                    {idx + 1}
+                  </span>
+                  <span className="flex-1 font-medium text-gray-800">{s.photographer.name}</span>
+                  <div className="flex items-center gap-1.5 text-sm">
+                    {s.totalRatings > 0 ? (
+                      <>
+                        <span className="font-bold text-gray-900">{s.averageScore.toFixed(2)}</span>
+                        <Star size={13} className="text-amber-400" fill="currentColor" />
+                        <span className="text-gray-400 text-xs">({s.totalRatings} ratings)</span>
+                      </>
+                    ) : (
+                      <span className="text-gray-400 text-xs">No ratings yet</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
-        {/* Per-topic results */}
+        {/* Per-topic photo grids */}
         <div className="space-y-6">
           {results.topics.map(topicResult => {
-            const sorted = [...topicResult.scores].sort((a, b) => b.averageScore - a.averageScore)
+            const sorted = [...topicResult.scores]
+              .filter(s => s.totalPhotos > 0)
+              .sort((a, b) => b.averageScore - a.averageScore)
+
+            if (sorted.length === 0) return null
+
             const topScore = sorted[0]?.averageScore ?? 0
-            const winner = sorted[0]
-            const isWinner = (s: PhotographerScore) =>
-              s.photographer.id === winner?.photographer.id &&
-              winner.averageScore > 0 &&
-              (sorted.length === 1 || winner.averageScore > sorted[1].averageScore)
 
             return (
               <div key={topicResult.topic.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                <div className="px-6 pt-6 pb-4">
+                <div className="px-6 pt-6 pb-6">
                   <h2 className="text-lg font-bold text-gray-900 mb-4">{topicResult.topic.name}</h2>
-
-                  {/* Category winner spotlight */}
-                  {winner && isWinner(winner) && (
-                    <div className="flex gap-4 mb-5 p-4 bg-amber-50 border border-amber-100 rounded-xl">
-                      {winner.topPhoto ? (
-                        <img
-                          src={`${BASE}${winner.topPhoto.imageUrl}`}
-                          alt={winner.topPhoto.title ?? winner.photographer.name}
-                          className="w-32 h-24 object-cover rounded-lg flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-32 h-24 bg-amber-100 rounded-lg flex-shrink-0 flex items-center justify-center">
-                          <Trophy size={24} className="text-amber-300" />
-                        </div>
-                      )}
-                      <div className="flex flex-col justify-center min-w-0">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Trophy size={14} className="text-amber-500 flex-shrink-0" />
-                          <span className="text-xs font-semibold text-amber-600 uppercase tracking-wide">Category Winner</span>
-                        </div>
-                        <div className="font-bold text-gray-900 text-lg truncate">{winner.photographer.name}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Full ranking */}
-                  <div className="space-y-4">
-                    {sorted.map((s: PhotographerScore) => {
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {sorted.map((s: PhotographerScore, idx) => {
                       const pct = topScore > 0 ? (s.averageScore / 10) * 100 : 0
-                      const isCategoryWinner = isWinner(s)
+                      const isWinner = idx === 0 && s.totalRatings > 0 && (sorted.length === 1 || s.averageScore > sorted[1].averageScore)
 
                       return (
-                        <div key={s.photographer.id}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              {isCategoryWinner && <Trophy size={14} className="text-amber-500" />}
-                              <span className="font-medium text-gray-800">{s.photographer.name}</span>
+                        <div
+                          key={s.photographer.id}
+                          className={`rounded-xl border overflow-hidden ${isWinner ? 'border-amber-300' : 'border-gray-200'}`}
+                        >
+                          {s.topPhoto ? (
+                            <button
+                              className="w-full aspect-[4/3] block relative overflow-hidden group"
+                              onClick={() => setLightboxPhoto(s.topPhoto!)}
+                            >
+                              <img
+                                src={`${BASE}${s.topPhoto.imageUrl}`}
+                                alt={s.topPhoto.title ?? s.photographer.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className={`absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow ${rankBadgeClass(idx)}`}>
+                                {idx + 1}
+                              </div>
+                            </button>
+                          ) : (
+                            <div className="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center relative">
+                              <Trophy size={24} className="text-gray-300" />
+                              <div className={`absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow ${rankBadgeClass(idx)}`}>
+                                {idx + 1}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              {s.totalRatings > 0 ? (
-                                <>
-                                  <span className="font-bold text-gray-900">{s.averageScore.toFixed(2)}</span>
-                                  <Star size={13} className="text-amber-400" fill="currentColor" />
-                                  <span className="text-gray-400">({s.totalRatings} ratings)</span>
-                                </>
-                              ) : (
-                                <span className="text-gray-400 text-xs">No ratings yet</span>
-                              )}
+                          )}
+                          <div className="p-3">
+                            <div className="flex items-center gap-1 mb-1 min-w-0">
+                              {isWinner && <Trophy size={12} className="text-amber-500 flex-shrink-0" />}
+                              <span className="font-medium text-sm text-gray-900 truncate">{s.photographer.name}</span>
                             </div>
-                          </div>
-                          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-indigo-500 rounded-full transition-all duration-500"
-                              style={{ width: `${pct}%` }}
-                            />
+                            {s.totalRatings > 0 ? (
+                              <div className="flex items-center gap-1 mb-2">
+                                <span className="text-sm font-bold text-gray-900">{s.averageScore.toFixed(2)}</span>
+                                <Star size={12} className="text-amber-400" fill="currentColor" />
+                                <span className="text-xs text-gray-400">({s.totalRatings})</span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400 block mb-2">No ratings yet</span>
+                            )}
+                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${isWinner ? 'bg-amber-400' : 'bg-indigo-400'}`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
                           </div>
                         </div>
                       )
@@ -286,6 +331,8 @@ export default function ResultsPage() {
           </div>
         )}
       </div>
+
+      {lightboxPhoto && <Lightbox photo={lightboxPhoto} onClose={() => setLightboxPhoto(null)} />}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Pencil, Users, Image, Tag, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Pencil, Users, Image, Tag, CheckCircle, Lock } from 'lucide-react'
 import { api } from '../../api/client'
 import PhotographersTab from './PhotographersTab'
 import TopicsTab from './TopicsTab'
@@ -28,13 +28,21 @@ export default function ContestDetail() {
     },
   })
 
+  const setUploadClosed = useMutation({
+    mutationFn: (isUploadClosed: boolean) => api.contests.setUploadClosed(contestId, isUploadClosed),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contest', id] })
+      qc.invalidateQueries({ queryKey: ['contests'] })
+    },
+  })
+
   if (isLoading) return <p className="text-gray-500">Loading...</p>
   if (error || !contest) return <p className="text-red-500">Failed to load contest.</p>
 
   const now = new Date()
   const uploadEnded = now > new Date(contest.uploadEndDate)
   const ratingEnded = now > new Date(contest.ratingEndDate)
-  const phase = contest.isCompleted ? 'completed' : ratingEnded ? 'ended' : uploadEnded ? 'rating' : 'upload'
+  const phase = contest.isCompleted ? 'completed' : ratingEnded ? 'ended' : (uploadEnded || contest.isUploadClosed) ? 'rating' : 'upload'
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'photographers', label: 'Photographers', icon: <Image size={15} /> },
@@ -78,6 +86,25 @@ export default function ContestDetail() {
           >
             View Results
           </Link>
+          {!contest.isCompleted && !uploadEnded && (
+            contest.isUploadClosed ? (
+              <button
+                onClick={() => setUploadClosed.mutate(false)}
+                disabled={setUploadClosed.isPending}
+                className="flex items-center gap-1.5 border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+              >
+                Reopen Uploads
+              </button>
+            ) : (
+              <button
+                onClick={() => { if (confirm('Close uploads early? Photographers will no longer be able to upload, and judging will open immediately.')) setUploadClosed.mutate(true) }}
+                disabled={setUploadClosed.isPending}
+                className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+              >
+                <Lock size={14} /> Close Uploads
+              </button>
+            )
+          )}
           {contest.isCompleted ? (
             <button
               onClick={() => { if (confirm('Reopen this contest for further ratings?')) setComplete.mutate(false) }}

@@ -115,7 +115,7 @@ export default function JudgePage() {
 
     const contest = session.contest;
     const now = new Date();
-    const isNotYetOpen = now < new Date(contest.uploadEndDate);
+    const isNotYetOpen = !contest.isUploadClosed && now < new Date(contest.uploadEndDate);
     const isEnded =
         contest.isCompleted || now > new Date(contest.ratingEndDate);
     const BASE = import.meta.env.VITE_API_URL ?? "";
@@ -286,17 +286,7 @@ export default function JudgePage() {
                                     const photos = photographer.photos.filter(
                                         (ph) => ph.topicId === topic.id,
                                     );
-                                    if (photos.length === 0)
-                                        return (
-                                            <div
-                                                key={photographer.id}
-                                                className="bg-white rounded-xl border border-gray-200 p-4"
-                                            >
-                                                <p className="text-sm text-gray-400">
-                                                    No photos uploaded yet.
-                                                </p>
-                                            </div>
-                                        );
+                                    if (photos.length === 0) return null;
 
                                     return (
                                         <div

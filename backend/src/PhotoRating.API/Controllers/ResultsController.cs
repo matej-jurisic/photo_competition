@@ -37,21 +37,26 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
             .Select(topic =>
             {
                 var topicPhotos = photos.Where(p => p.TopicId == topic.Id).ToList();
-                var scores = contest.Photographers.Select(photographer =>
-                {
-                    var photographerPhotos = topicPhotos.Where(p => p.PhotographerId == photographer.Id).ToList();
-                    var allRatings = photographerPhotos.SelectMany(p => p.Ratings).ToList();
-                    var topPhoto = photographerPhotos
-                        .OrderByDescending(p => p.Ratings.Any() ? p.Ratings.Average(r => r.Score) : 0)
-                        .FirstOrDefault();
-                    return new PhotographerScoreDto(
-                        new PhotographerDto(photographer.Id, photographer.Name, photographer.Bio, photographer.ContestId, photographer.Token),
-                        allRatings.Count > 0 ? allRatings.Average(r => r.Score) : 0,
-                        allRatings.Count,
-                        photographerPhotos.Count,
-                        topPhoto is null ? null : new PhotoDto(topPhoto.Id, topPhoto.Title, topPhoto.ImageUrl, topPhoto.PhotographerId, topPhoto.TopicId)
-                    );
-                }).ToList();
+                var scores = contest.Photographers
+                    .Select(photographer =>
+                    {
+                        var photographerPhotos = topicPhotos.Where(p => p.PhotographerId == photographer.Id).ToList();
+                        if (photographerPhotos.Count == 0) return null;
+                        var allRatings = photographerPhotos.SelectMany(p => p.Ratings).ToList();
+                        var topPhoto = photographerPhotos
+                            .OrderByDescending(p => p.Ratings.Any() ? p.Ratings.Average(r => r.Score) : 0)
+                            .First();
+                        return new PhotographerScoreDto(
+                            new PhotographerDto(photographer.Id, photographer.Name, photographer.Bio, photographer.ContestId, photographer.Token),
+                            allRatings.Count > 0 ? allRatings.Average(r => r.Score) : 0,
+                            allRatings.Count,
+                            photographerPhotos.Count,
+                            new PhotoDto(topPhoto.Id, topPhoto.Title, topPhoto.ImageUrl, topPhoto.PhotographerId, topPhoto.TopicId)
+                        );
+                    })
+                    .Where(s => s is not null)
+                    .Select(s => s!)
+                    .ToList();
 
                 return new TopicResultDto(
                     new TopicDto(topic.Id, topic.Name, topic.ContestId, topic.OrderIndex),
@@ -59,25 +64,44 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
                 );
             }).ToList();
 
-        // Determine overall winner by average score across all topics
-        var overallScores = contest.Photographers.Select(photographer =>
-        {
-            var photographerPhotos = photos.Where(p => p.PhotographerId == photographer.Id).ToList();
-            var allRatings = photographerPhotos.SelectMany(p => p.Ratings).ToList();
-            return (Photographer: photographer, Avg: allRatings.Count > 0 ? allRatings.Average(r => r.Score) : 0);
-        }).ToList();
+        // Compute overall scores (photographers who submitted at least one photo)
+        var overallScoreDtos = contest.Photographers
+            .Select(photographer =>
+            {
+                var photographerPhotos = photos.Where(p => p.PhotographerId == photographer.Id).ToList();
+                if (photographerPhotos.Count == 0) return null;
+                var allRatings = photographerPhotos.SelectMany(p => p.Ratings).ToList();
+                var topPhoto = photographerPhotos
+                    .OrderByDescending(p => p.Ratings.Any() ? p.Ratings.Average(r => r.Score) : 0)
+                    .First();
+                return new PhotographerScoreDto(
+                    new PhotographerDto(photographer.Id, photographer.Name, photographer.Bio, photographer.ContestId, photographer.Token),
+                    allRatings.Count > 0 ? allRatings.Average(r => r.Score) : 0,
+                    allRatings.Count,
+                    photographerPhotos.Count,
+                    new PhotoDto(topPhoto.Id, topPhoto.Title, topPhoto.ImageUrl, topPhoto.PhotographerId, topPhoto.TopicId)
+                );
+            })
+            .Where(s => s is not null)
+            .Select(s => s!)
+            .OrderByDescending(s => s.AverageScore)
+            .ToList();
 
+        // Determine overall winner
         Photographer? winner = null;
         List<Photographer> tiedPhotographers = [];
-        var withRatings = overallScores.Where(x => x.Avg > 0).OrderByDescending(x => x.Avg).ToList();
-        if (withRatings.Count >= 2 && withRatings[0].Avg > withRatings[1].Avg)
-            winner = withRatings[0].Photographer;
+        var withRatings = overallScoreDtos.Where(s => s.AverageScore > 0).ToList();
+        if (withRatings.Count >= 2 && withRatings[0].AverageScore > withRatings[1].AverageScore)
+            winner = contest.Photographers.First(p => p.Id == withRatings[0].Photographer.Id);
         else if (withRatings.Count == 1)
-            winner = withRatings[0].Photographer;
+            winner = contest.Photographers.First(p => p.Id == withRatings[0].Photographer.Id);
         else if (withRatings.Count >= 2)
         {
-            var topAvg = withRatings[0].Avg;
-            tiedPhotographers = withRatings.Where(x => x.Avg == topAvg).Select(x => x.Photographer).ToList();
+            var topAvg = withRatings[0].AverageScore;
+            tiedPhotographers = withRatings
+                .Where(x => x.AverageScore == topAvg)
+                .Select(x => contest.Photographers.First(p => p.Id == x.Photographer.Id))
+                .ToList();
         }
 
         var photoIds = photos.Select(p => p.Id).ToList();
@@ -101,11 +125,11 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
             })
             .ToList();
 
-        var contestDto = new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted);
+        var contestDto = new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed);
         var winnerDto = winner is null ? null : new PhotographerDto(winner.Id, winner.Name, winner.Bio, winner.ContestId, winner.Token);
-        var winnerScore = winner is null ? (double?)null : overallScores.First(x => x.Photographer.Id == winner.Id).Avg;
+        var winnerScore = winner is null ? (double?)null : overallScoreDtos.First(x => x.Photographer.Id == winner.Id).AverageScore;
         var tiedDtos = tiedPhotographers.Select(p => new PhotographerDto(p.Id, p.Name, p.Bio, p.ContestId, p.Token)).ToList();
 
-        return new ContestResultsDto(contestDto, topicResults, winnerDto, winnerScore, tiedDtos, badgedPhotos);
+        return new ContestResultsDto(contestDto, topicResults, winnerDto, winnerScore, tiedDtos, badgedPhotos, overallScoreDtos);
     }
 }

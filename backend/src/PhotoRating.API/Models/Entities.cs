@@ -9,6 +9,7 @@ public class Contest
     public DateTime UploadEndDate { get; set; }
     public DateTime RatingEndDate { get; set; }
     public bool IsCompleted { get; set; }
+    public bool IsUploadClosed { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<Photographer> Photographers { get; set; } = [];

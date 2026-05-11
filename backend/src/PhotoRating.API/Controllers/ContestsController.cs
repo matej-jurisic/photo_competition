@@ -15,7 +15,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
     public async Task<List<ContestDto>> GetAll() =>
         await db.Contests
             .OrderByDescending(c => c.CreatedAt)
-            .Select(c => new ContestDto(c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Rewards, c.IsCompleted))
+            .Select(c => new ContestDto(c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Rewards, c.IsCompleted, c.IsUploadClosed))
             .ToListAsync();
 
     [HttpGet("{id}")]
@@ -44,7 +44,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetById), new { id = contest.Id },
-            new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted));
+            new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed));
     }
 
     [HttpPut("{id}")]
@@ -65,7 +65,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
             db.ContestBadges.Add(new ContestBadge { ContestId = id, Name = b.Name, AllowedCount = b.AllowedCount });
 
         await db.SaveChangesAsync();
-        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted);
+        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed);
     }
 
     [HttpPatch("{id}/complete")]
@@ -75,7 +75,17 @@ public class ContestsController(AppDbContext db) : ControllerBase
         if (contest is null) return NotFound();
         contest.IsCompleted = dto.IsCompleted;
         await db.SaveChangesAsync();
-        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted);
+        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed);
+    }
+
+    [HttpPatch("{id}/close-uploads")]
+    public async Task<ActionResult<ContestDto>> SetUploadClosed(int id, SetUploadClosedDto dto)
+    {
+        var contest = await db.Contests.FindAsync(id);
+        if (contest is null) return NotFound();
+        contest.IsUploadClosed = dto.IsUploadClosed;
+        await db.SaveChangesAsync();
+        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed);
     }
 
     [HttpDelete("{id}")]
@@ -89,7 +99,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
     }
 
     private static ContestDetailDto ToDetail(Contest c) => new(
-        c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Rewards, c.IsCompleted,
+        c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Rewards, c.IsCompleted, c.IsUploadClosed,
         c.Photographers.Select(p => new PhotographerWithPhotosDto(
             p.Id, p.Name, p.Bio, p.ContestId, p.Token,
             p.Photos.Select(ph => new PhotoDto(ph.Id, ph.Title, ph.ImageUrl, ph.PhotographerId, ph.TopicId)).ToList()

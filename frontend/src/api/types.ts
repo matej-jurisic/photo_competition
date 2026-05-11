@@ -6,6 +6,7 @@ export interface Contest {
   uploadEndDate: string
   ratingEndDate: string
   isCompleted: boolean
+  isUploadClosed: boolean
   createdAt: string
 }
 
@@ -113,4 +114,5 @@ export interface ContestResults {
   winnerScore: number | null
   tiedPhotographers: Photographer[]
   badgedPhotos: BadgedPhoto[]
+  overallScores: PhotographerScore[]
 }

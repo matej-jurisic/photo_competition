@@ -4,6 +4,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Plus, X } from 'lucide-react'
 import { api } from '../../api/client'
 
+function toEndOfDay(dateStr: string): string {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  return new Date(year, month - 1, day, 23, 59, 59, 999).toISOString()
+}
+
+function toLocalDateInputValue(isoString: string): string {
+  const d = new Date(isoString)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 export default function ContestForm() {
   const { id } = useParams()
   const isEdit = Boolean(id)
@@ -30,8 +43,8 @@ export default function ContestForm() {
       setDescription(existing.description ?? '')
       setRewards(existing.rewards ?? [])
       setBadges(existing.badges.map(b => ({ name: b.name, allowedCount: b.allowedCount })))
-      setUploadEndDate(existing.uploadEndDate.slice(0, 10))
-      setRatingEndDate(existing.ratingEndDate.slice(0, 10))
+      setUploadEndDate(toLocalDateInputValue(existing.uploadEndDate))
+      setRatingEndDate(toLocalDateInputValue(existing.ratingEndDate))
     }
   }, [existing])
 
@@ -62,8 +75,8 @@ export default function ContestForm() {
       description: description.trim(),
       rewards: rewards.map(r => r.trim()).filter(r => r.length > 0),
       badges: badges.filter(b => b.name.trim().length > 0).map(b => ({ name: b.name.trim(), allowedCount: b.allowedCount })),
-      uploadEndDate: new Date(uploadEndDate).toISOString(),
-      ratingEndDate: new Date(ratingEndDate).toISOString(),
+      uploadEndDate: toEndOfDay(uploadEndDate),
+      ratingEndDate: toEndOfDay(ratingEndDate),
     }
     if (isEdit) update.mutate(payload)
     else create.mutate(payload)

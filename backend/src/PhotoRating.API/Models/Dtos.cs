@@ -5,14 +5,15 @@ public record ContestBadgeDto(int Id, string Name, int AllowedCount);
 public record ContestBadgeInputDto(string Name, int AllowedCount);
 public record CreateContestDto(string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, List<string> Rewards, List<ContestBadgeInputDto> Badges);
 public record UpdateContestDto(string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, List<string> Rewards, List<ContestBadgeInputDto> Badges);
-public record ContestDto(int Id, string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, DateTime CreatedAt, List<string> Rewards, bool IsCompleted);
+public record ContestDto(int Id, string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, DateTime CreatedAt, List<string> Rewards, bool IsCompleted, bool IsUploadClosed);
 public record ContestDetailDto(
-    int Id, string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, DateTime CreatedAt, List<string> Rewards, bool IsCompleted,
+    int Id, string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, DateTime CreatedAt, List<string> Rewards, bool IsCompleted, bool IsUploadClosed,
     List<PhotographerWithPhotosDto> Photographers,
     List<TopicDto> Topics,
     List<JudgeDto> Judges,
     List<ContestBadgeDto> Badges);
 public record SetCompleteDto(bool IsCompleted);
+public record SetUploadClosedDto(bool IsUploadClosed);
 
 // Photographer
 public record CreatePhotographerDto(string Name, string? Bio);
@@ -53,4 +54,4 @@ public record BadgedPhotoDto(PhotoDto Photo, string PhotographerName, string Top
 // Results
 public record PhotographerScoreDto(PhotographerDto Photographer, double AverageScore, int TotalRatings, int TotalPhotos, PhotoDto? TopPhoto);
 public record TopicResultDto(TopicDto Topic, List<PhotographerScoreDto> Scores);
-public record ContestResultsDto(ContestDto Contest, List<TopicResultDto> Topics, PhotographerDto? Winner, double? WinnerScore, List<PhotographerDto> TiedPhotographers, List<BadgedPhotoDto> BadgedPhotos);
+public record ContestResultsDto(ContestDto Contest, List<TopicResultDto> Topics, PhotographerDto? Winner, double? WinnerScore, List<PhotographerDto> TiedPhotographers, List<BadgedPhotoDto> BadgedPhotos, List<PhotographerScoreDto> OverallScores);

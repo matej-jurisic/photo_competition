@@ -34,6 +34,8 @@ export const api = {
       http.get<ContestResults>(`/api/contests/${id}/results`, { headers: adminHeaders() }).then(r => r.data),
     setComplete: (id: number, isCompleted: boolean) =>
       http.patch<Contest>(`/api/contests/${id}/complete`, { isCompleted }, { headers: adminHeaders() }).then(r => r.data),
+    setUploadClosed: (id: number, isUploadClosed: boolean) =>
+      http.patch<Contest>(`/api/contests/${id}/close-uploads`, { isUploadClosed }, { headers: adminHeaders() }).then(r => r.data),
   },
 
   photographers: {
