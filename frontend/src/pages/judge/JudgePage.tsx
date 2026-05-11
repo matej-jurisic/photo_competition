@@ -19,6 +19,24 @@ interface LocalRating {
     comment: string;
 }
 
+function seededShuffle<T>(arr: T[], seed: string): T[] {
+    let hash = 0
+    for (let i = 0; i < seed.length; i++) {
+        hash = Math.imul(hash ^ seed.charCodeAt(i), 0x9e3779b9)
+        hash ^= hash >>> 16
+    }
+    const result = [...arr]
+    for (let i = result.length - 1; i > 0; i--) {
+        hash = Math.imul(hash ^ (hash >>> 15), 0x85ebca77)
+        hash ^= hash >>> 13
+        hash = Math.imul(hash, 0xc2b2ae35)
+        hash ^= hash >>> 16
+        const j = Math.abs(hash) % (i + 1);
+        [result[i], result[j]] = [result[j], result[i]]
+    }
+    return result
+}
+
 export default function JudgePage() {
     const { token } = useParams<{ token: string }>();
     const [ratings, setRatings] = useState<Record<number, LocalRating>>({});
@@ -282,153 +300,83 @@ export default function JudgePage() {
                             </h2>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {contest.photographers.map((photographer) => {
-                                    const photos = photographer.photos.filter(
-                                        (ph) => ph.topicId === topic.id,
-                                    );
-                                    if (photos.length === 0) return null;
+                                {seededShuffle(
+                                    contest.photographers.flatMap(p =>
+                                        p.photos.filter(ph => ph.topicId === topic.id)
+                                    ),
+                                    session.judge.token + topic.id
+                                ).map((photo) => {
+                                    const r = ratings[photo.id];
+                                    const assignedBadge = badges[photo.id];
 
                                     return (
-                                        <div
-                                            key={photographer.id}
-                                            className="bg-white rounded-xl border border-gray-200 p-4"
-                                        >
-                                            <div className="space-y-5">
-                                                {photos.map((photo) => {
-                                                    const r = ratings[photo.id];
-                                                    const assignedBadge =
-                                                        badges[photo.id];
-
-                                                    return (
-                                                        <div key={photo.id}>
-                                                            <div
-                                                                className="w-full aspect-[4/3] rounded-lg overflow-hidden flex items-center justify-center"
-                                                                onClick={() =>
-                                                                    setSelectedImage(
-                                                                        photo,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <img
-                                                                    src={`${BASE}${photo.imageUrl}`}
-                                                                    alt={
-                                                                        photo.title ??
-                                                                        ""
-                                                                    }
-                                                                    className="w-full h-full object-contain"
-                                                                />
-                                                            </div>
-                                                            {photo.title && (
-                                                                <p className="text-xs text-gray-500 mt-1">
-                                                                    {
-                                                                        photo.title
-                                                                    }
-                                                                </p>
-                                                            )}
-                                                            <div className="mt-3">
-                                                                <div className="flex items-center gap-1 mb-2">
-                                                                    {[
-                                                                        1, 2, 3,
-                                                                        4, 5, 6,
-                                                                        7, 8, 9,
-                                                                        10,
-                                                                    ].map(
-                                                                        (
-                                                                            score,
-                                                                        ) => (
-                                                                            <button
-                                                                                key={
-                                                                                    score
-                                                                                }
-                                                                                disabled={
-                                                                                    isEnded ||
-                                                                                    isNotYetOpen
-                                                                                }
-                                                                                onClick={() =>
-                                                                                    setRating(
-                                                                                        photo.id,
-                                                                                        score,
-                                                                                        r?.comment ??
-                                                                                            "",
-                                                                                    )
-                                                                                }
-                                                                                className={`w-7 h-7 rounded text-xs font-medium transition-colors disabled:cursor-not-allowed ${
-                                                                                    r?.score ===
-                                                                                    score
-                                                                                        ? "bg-indigo-600 text-white"
-                                                                                        : r?.score &&
-                                                                                            score <=
-                                                                                                r.score
-                                                                                          ? "bg-indigo-100 text-indigo-700"
-                                                                                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                                                                }`}
-                                                                            >
-                                                                                {
-                                                                                    score
-                                                                                }
-                                                                            </button>
-                                                                        ),
-                                                                    )}
-                                                                </div>
-                                                                <input
-                                                                    type="text"
-                                                                    disabled={
-                                                                        isEnded ||
-                                                                        isNotYetOpen
-                                                                    }
-                                                                    placeholder="Comment (optional)"
-                                                                    value={
-                                                                        r?.comment ??
-                                                                        ""
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        setRating(
-                                                                            photo.id,
-                                                                            r?.score ??
-                                                                                0,
-                                                                            e
-                                                                                .target
-                                                                                .value,
-                                                                        )
-                                                                    }
-                                                                    className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:bg-gray-50 disabled:text-gray-400 mb-2"
-                                                                />
-                                                                {/* Badge row */}
-                                                                {contest.badges.length > 0 && (
-                                                                <div className="flex flex-wrap gap-1.5 mt-1">
-                                                                    {contest.badges.map(b => {
-                                                                            const isSelected = assignedBadge === b.name;
-                                                                            const usedElsewhere = Object.entries(badges).filter(
-                                                                                ([pid, bn]) => bn === b.name && Number(pid) !== photo.id
-                                                                            ).length;
-                                                                            const isDisabled =
-                                                                                isEnded ||
-                                                                                isNotYetOpen ||
-                                                                                (!isSelected && usedElsewhere >= b.allowedCount);
-                                                                            return (
-                                                                                <button
-                                                                                    key={b.name}
-                                                                                    disabled={isDisabled}
-                                                                                    onClick={() => toggleBadge(photo.id, b.name)}
-                                                                                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                                                                                        isSelected
-                                                                                            ? "bg-purple-600 text-white border-purple-600"
-                                                                                            : "border-gray-200 text-gray-500 hover:border-purple-400 hover:text-purple-600"
-                                                                                    }`}
-                                                                                >
-                                                                                    <Award size={10} />
-                                                                                    {b.name}
-                                                                                </button>
-                                                                            );
-                                                                        })}
-                                                                </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
+                                        <div key={photo.id} className="bg-white rounded-xl border border-gray-200 p-4">
+                                            <div
+                                                className="w-full aspect-[4/3] rounded-lg overflow-hidden flex items-center justify-center"
+                                                onClick={() => setSelectedImage(photo)}
+                                            >
+                                                <img
+                                                    src={`${BASE}${photo.imageUrl}`}
+                                                    alt={photo.title ?? ""}
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
+                                            {photo.title && (
+                                                <p className="text-xs text-gray-500 mt-1">{photo.title}</p>
+                                            )}
+                                            <div className="mt-3">
+                                                <div className="flex items-center gap-1 mb-2">
+                                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(score => (
+                                                        <button
+                                                            key={score}
+                                                            disabled={isEnded || isNotYetOpen}
+                                                            onClick={() => setRating(photo.id, score, r?.comment ?? "")}
+                                                            className={`w-7 h-7 rounded text-xs font-medium transition-colors disabled:cursor-not-allowed ${
+                                                                r?.score === score
+                                                                    ? "bg-indigo-600 text-white"
+                                                                    : r?.score && score <= r.score
+                                                                      ? "bg-indigo-100 text-indigo-700"
+                                                                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                                            }`}
+                                                        >
+                                                            {score}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    disabled={isEnded || isNotYetOpen}
+                                                    placeholder="Comment (optional)"
+                                                    value={r?.comment ?? ""}
+                                                    onChange={e => setRating(photo.id, r?.score ?? 0, e.target.value)}
+                                                    className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:bg-gray-50 disabled:text-gray-400 mb-2"
+                                                />
+                                                {contest.badges.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5 mt-1">
+                                                        {contest.badges.map(b => {
+                                                            const isSelected = assignedBadge === b.name;
+                                                            const usedElsewhere = Object.entries(badges).filter(
+                                                                ([pid, bn]) => bn === b.name && Number(pid) !== photo.id
+                                                            ).length;
+                                                            const isDisabled = isEnded || isNotYetOpen || (!isSelected && usedElsewhere >= b.allowedCount);
+                                                            return (
+                                                                <button
+                                                                    key={b.name}
+                                                                    disabled={isDisabled}
+                                                                    onClick={() => toggleBadge(photo.id, b.name)}
+                                                                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                                                                        isSelected
+                                                                            ? "bg-purple-600 text-white border-purple-600"
+                                                                            : "border-gray-200 text-gray-500 hover:border-purple-400 hover:text-purple-600"
+                                                                    }`}
+                                                                >
+                                                                    <Award size={10} />
+                                                                    {b.name}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     );
