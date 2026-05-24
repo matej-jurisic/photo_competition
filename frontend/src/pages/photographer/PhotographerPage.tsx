@@ -133,7 +133,7 @@ export default function PhotographerPage() {
               </div>
 
               {photo ? (
-                <div className="relative group inline-block">
+                <div className="relative group flex justify-center">
                   <img
                     src={`${BASE}${photo.imageUrl}`}
                     alt=""

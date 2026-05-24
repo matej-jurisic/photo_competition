@@ -8,19 +8,26 @@ namespace PhotoRating.API.Controllers;
 
 [ApiController]
 [Route("api/contests")]
-[ServiceFilter(typeof(AdminAuthFilter))]
-public class ContestsController(AppDbContext db) : ControllerBase
+public class ContestsController(AppDbContext db, IConfiguration config) : ControllerBase
 {
-    [HttpGet]
-    public async Task<List<ContestDto>> GetAll() =>
-        await db.Contests
+    private bool IsAdmin() =>
+        !string.IsNullOrEmpty(config["AdminKey"]) &&
+        Request.Headers["X-Admin-Key"].FirstOrDefault() == config["AdminKey"];
+
+[HttpGet]
+    public async Task<ActionResult<List<ContestDto>>> GetAll()
+    {
+        if (!IsAdmin()) return Forbid();
+        return await db.Contests
             .OrderByDescending(c => c.CreatedAt)
-            .Select(c => new ContestDto(c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Rewards, c.IsCompleted, c.IsUploadClosed))
+            .Select(c => new ContestDto(c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Rewards, c.IsCompleted, c.IsUploadClosed, c.OwnerId))
             .ToListAsync();
+    }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ContestDetailDto>> GetById(int id)
     {
+        if (!IsAdmin()) return Forbid();
         var contest = await db.Contests
             .AsNoTracking()
             .AsSplitQuery()
@@ -37,7 +44,16 @@ public class ContestsController(AppDbContext db) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ContestDto>> Create(CreateContestDto dto)
     {
-        var contest = new Contest { Name = dto.Name, Description = dto.Description, UploadEndDate = dto.UploadEndDate, RatingEndDate = dto.RatingEndDate, Rewards = dto.Rewards };
+        if (!IsAdmin()) return Forbid();
+
+        var contest = new Contest
+        {
+            Name = dto.Name,
+            Description = dto.Description,
+            UploadEndDate = dto.UploadEndDate,
+            RatingEndDate = dto.RatingEndDate,
+            Rewards = dto.Rewards,
+        };
         db.Contests.Add(contest);
         await db.SaveChangesAsync();
 
@@ -46,12 +62,14 @@ public class ContestsController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetById), new { id = contest.Id },
-            new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed));
+            new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed, contest.OwnerId));
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<ContestDto>> Update(int id, UpdateContestDto dto)
     {
+        if (!IsAdmin()) return Forbid();
+
         var contest = await db.Contests.FindAsync(id);
         if (contest is null) return NotFound();
 
@@ -67,32 +85,37 @@ public class ContestsController(AppDbContext db) : ControllerBase
             db.ContestBadges.Add(new ContestBadge { ContestId = id, Name = b.Name, AllowedCount = b.AllowedCount });
 
         await db.SaveChangesAsync();
-        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed);
+        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed, contest.OwnerId);
     }
 
     [HttpPatch("{id}/complete")]
     public async Task<ActionResult<ContestDto>> SetComplete(int id, SetCompleteDto dto)
     {
+        if (!IsAdmin()) return Forbid();
+
         var contest = await db.Contests.FindAsync(id);
         if (contest is null) return NotFound();
         contest.IsCompleted = dto.IsCompleted;
         await db.SaveChangesAsync();
-        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed);
+        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed, contest.OwnerId);
     }
 
     [HttpPatch("{id}/close-uploads")]
     public async Task<ActionResult<ContestDto>> SetUploadClosed(int id, SetUploadClosedDto dto)
     {
+        if (!IsAdmin()) return Forbid();
+
         var contest = await db.Contests.FindAsync(id);
         if (contest is null) return NotFound();
         contest.IsUploadClosed = dto.IsUploadClosed;
         await db.SaveChangesAsync();
-        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed);
+        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed, contest.OwnerId);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
+        if (!IsAdmin()) return Forbid();
         var contest = await db.Contests.FindAsync(id);
         if (contest is null) return NotFound();
         db.Contests.Remove(contest);
@@ -108,6 +131,7 @@ public class ContestsController(AppDbContext db) : ControllerBase
         )).ToList(),
         c.Topics.OrderBy(t => t.OrderIndex).Select(t => new TopicDto(t.Id, t.Name, t.ContestId, t.OrderIndex)).ToList(),
         c.Judges.Select(j => new JudgeDto(j.Id, j.Name, j.Email, j.Token, j.ContestId, j.CreatedAt)).ToList(),
-        c.Badges.Select(b => new ContestBadgeDto(b.Id, b.Name, b.AllowedCount)).ToList()
+        c.Badges.Select(b => new ContestBadgeDto(b.Id, b.Name, b.AllowedCount)).ToList(),
+        c.OwnerId
     );
 }

@@ -17,7 +17,12 @@ function toLocalDateInputValue(isoString: string): string {
   return `${y}-${m}-${day}`
 }
 
-export default function ContestForm() {
+interface ContestFormProps {
+  onSuccess?: (id: number) => void
+  basePath?: string
+}
+
+export default function ContestForm({ onSuccess, basePath = '/admin/contests' }: ContestFormProps) {
   const { id } = useParams()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
@@ -50,13 +55,23 @@ export default function ContestForm() {
 
   const create = useMutation({
     mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[]; badges: { name: string; allowedCount: number }[] }) => api.contests.create(d),
-    onSuccess: c => { qc.invalidateQueries({ queryKey: ['contests'] }); navigate(`/admin/contests/${c.id}`) },
-    onError: () => setError('Failed to save. Check your admin key.'),
+    onSuccess: c => {
+      qc.invalidateQueries({ queryKey: ['contests'] })
+      qc.invalidateQueries({ queryKey: ['dashboard', 'owned'] })
+      if (onSuccess) onSuccess(c.id)
+      else navigate(`${basePath}/${c.id}`)
+    },
+    onError: () => setError('Failed to save. Check your admin key or login status.'),
   })
 
   const update = useMutation({
     mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[]; badges: { name: string; allowedCount: number }[] }) => api.contests.update(Number(id), d),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['contests'] }); navigate(`/admin/contests/${id}`) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contests'] })
+      qc.invalidateQueries({ queryKey: ['dashboard', 'owned'] })
+      if (onSuccess) onSuccess(Number(id))
+      else navigate(`${basePath}/${id}`)
+    },
     onError: () => setError('Failed to save.'),
   })
 

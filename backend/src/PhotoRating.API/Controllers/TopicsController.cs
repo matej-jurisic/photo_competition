@@ -1,18 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PhotoRating.API.Data;
-using PhotoRating.API.Filters;
 using PhotoRating.API.Models;
 
 namespace PhotoRating.API.Controllers;
 
 [ApiController]
-[ServiceFilter(typeof(AdminAuthFilter))]
-public class TopicsController(AppDbContext db) : ControllerBase
+public class TopicsController(AppDbContext db, IConfiguration config) : ControllerBase
 {
+    private bool IsAdmin() =>
+        !string.IsNullOrEmpty(config["AdminKey"]) &&
+        Request.Headers["X-Admin-Key"].FirstOrDefault() == config["AdminKey"];
+
     [HttpGet("api/contests/{contestId}/topics")]
     public async Task<ActionResult<List<TopicDto>>> GetByContest(int contestId)
     {
+        if (!IsAdmin()) return Forbid();
         if (!await db.Contests.AnyAsync(c => c.Id == contestId)) return NotFound();
         return await db.Topics
             .Where(t => t.ContestId == contestId)
@@ -24,6 +27,7 @@ public class TopicsController(AppDbContext db) : ControllerBase
     [HttpPost("api/contests/{contestId}/topics")]
     public async Task<ActionResult<TopicDto>> Create(int contestId, CreateTopicDto dto)
     {
+        if (!IsAdmin()) return Forbid();
         if (!await db.Contests.AnyAsync(c => c.Id == contestId)) return NotFound();
         var t = new Topic { Name = dto.Name, OrderIndex = dto.OrderIndex, ContestId = contestId };
         db.Topics.Add(t);
@@ -34,6 +38,7 @@ public class TopicsController(AppDbContext db) : ControllerBase
     [HttpPut("api/topics/{id}")]
     public async Task<ActionResult<TopicDto>> Update(int id, UpdateTopicDto dto)
     {
+        if (!IsAdmin()) return Forbid();
         var t = await db.Topics.FindAsync(id);
         if (t is null) return NotFound();
         t.Name = dto.Name;
@@ -45,6 +50,7 @@ public class TopicsController(AppDbContext db) : ControllerBase
     [HttpDelete("api/topics/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
+        if (!IsAdmin()) return Forbid();
         var t = await db.Topics.FindAsync(id);
         if (t is null) return NotFound();
         db.Topics.Remove(t);

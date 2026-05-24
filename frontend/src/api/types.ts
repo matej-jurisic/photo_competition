@@ -8,6 +8,7 @@ export interface Contest {
   isCompleted: boolean
   isUploadClosed: boolean
   createdAt: string
+  ownerId: number | null
 }
 
 export interface ContestBadge {
@@ -117,4 +118,55 @@ export interface ContestResults {
   badgedPhotos: BadgedPhoto[]
   overallScores: PhotographerScore[]
   judgeCount: number
+}
+
+// Auth
+export interface AuthResult {
+  token: string
+  userId: number
+  username: string
+  displayName: string
+}
+
+// Browse (public, no tokens)
+export interface ContestPublic {
+  id: number
+  name: string
+  description: string | null
+  uploadEndDate: string
+  ratingEndDate: string
+  createdAt: string
+  isCompleted: boolean
+  isUploadClosed: boolean
+  ownerDisplayName: string | null
+  photographerCount: number
+  judgeCount: number
+  topics: Topic[]
+}
+
+// Join requests
+export type JoinRole = 'Photographer' | 'Judge'
+export type JoinRequestStatus = 'Pending' | 'Accepted' | 'Rejected'
+
+export interface JoinRequest {
+  id: number
+  contestId: number
+  contestName: string
+  requesterDisplayName: string
+  role: JoinRole
+  status: JoinRequestStatus
+  message: string | null
+  createdAt: string
+  reviewedAt: string | null
+}
+
+// Dashboard
+export interface MyContestEntry {
+  contest: Contest
+  role: JoinRole
+}
+
+export interface OwnedContestSummary {
+  contest: Contest
+  pendingRequestCount: number
 }

@@ -1,18 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PhotoRating.API.Data;
-using PhotoRating.API.Filters;
 using PhotoRating.API.Models;
 
 namespace PhotoRating.API.Controllers;
 
 [ApiController]
-[ServiceFilter(typeof(AdminAuthFilter))]
 public class JudgesController(AppDbContext db, IConfiguration config) : ControllerBase
 {
+    private bool IsAdmin() =>
+        !string.IsNullOrEmpty(config["AdminKey"]) &&
+        Request.Headers["X-Admin-Key"].FirstOrDefault() == config["AdminKey"];
+
     [HttpGet("api/contests/{contestId}/judges")]
     public async Task<ActionResult<List<JudgeDto>>> GetByContest(int contestId)
     {
+        if (!IsAdmin()) return Forbid();
         if (!await db.Contests.AnyAsync(c => c.Id == contestId)) return NotFound();
         return await db.Judges
             .Where(j => j.ContestId == contestId)
@@ -23,6 +26,7 @@ public class JudgesController(AppDbContext db, IConfiguration config) : Controll
     [HttpPost("api/contests/{contestId}/judges")]
     public async Task<ActionResult<JudgeDto>> Create(int contestId, CreateJudgeDto dto)
     {
+        if (!IsAdmin()) return Forbid();
         if (!await db.Contests.AnyAsync(c => c.Id == contestId)) return NotFound();
         var judge = new Judge { Name = dto.Name, Email = dto.Email, ContestId = contestId };
         db.Judges.Add(judge);
@@ -33,6 +37,7 @@ public class JudgesController(AppDbContext db, IConfiguration config) : Controll
     [HttpPut("api/judges/{id}")]
     public async Task<ActionResult<JudgeDto>> Update(int id, UpdateJudgeDto dto)
     {
+        if (!IsAdmin()) return Forbid();
         var judge = await db.Judges.FindAsync(id);
         if (judge is null) return NotFound();
         judge.Name = dto.Name;
@@ -44,6 +49,7 @@ public class JudgesController(AppDbContext db, IConfiguration config) : Controll
     [HttpDelete("api/judges/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
+        if (!IsAdmin()) return Forbid();
         var judge = await db.Judges.FindAsync(id);
         if (judge is null) return NotFound();
         db.Judges.Remove(judge);
@@ -54,6 +60,7 @@ public class JudgesController(AppDbContext db, IConfiguration config) : Controll
     [HttpGet("api/judges/{id}/link")]
     public async Task<ActionResult<object>> GetJudgeLink(int id)
     {
+        if (!IsAdmin()) return Forbid();
         var judge = await db.Judges.FindAsync(id);
         if (judge is null) return NotFound();
         var baseUrl = config["FrontendUrl"] ?? "http://localhost:3000";

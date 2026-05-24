@@ -1,18 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PhotoRating.API.Data;
-using PhotoRating.API.Filters;
 using PhotoRating.API.Models;
 
 namespace PhotoRating.API.Controllers;
 
 [ApiController]
-[ServiceFilter(typeof(AdminAuthFilter))]
-public class PhotographersController(AppDbContext db) : ControllerBase
+public class PhotographersController(AppDbContext db, IConfiguration config) : ControllerBase
 {
+    private bool IsAdmin() =>
+        !string.IsNullOrEmpty(config["AdminKey"]) &&
+        Request.Headers["X-Admin-Key"].FirstOrDefault() == config["AdminKey"];
+
     [HttpGet("api/contests/{contestId}/photographers")]
     public async Task<ActionResult<List<PhotographerWithPhotosDto>>> GetByContest(int contestId)
     {
+        if (!IsAdmin()) return Forbid();
         if (!await db.Contests.AnyAsync(c => c.Id == contestId)) return NotFound();
         return await db.Photographers
             .Where(p => p.ContestId == contestId)
@@ -26,6 +29,7 @@ public class PhotographersController(AppDbContext db) : ControllerBase
     [HttpPost("api/contests/{contestId}/photographers")]
     public async Task<ActionResult<PhotographerDto>> Create(int contestId, CreatePhotographerDto dto)
     {
+        if (!IsAdmin()) return Forbid();
         if (!await db.Contests.AnyAsync(c => c.Id == contestId)) return NotFound();
         var p = new Photographer { Name = dto.Name, Bio = dto.Bio, ContestId = contestId };
         db.Photographers.Add(p);
@@ -36,6 +40,7 @@ public class PhotographersController(AppDbContext db) : ControllerBase
     [HttpPut("api/photographers/{id}")]
     public async Task<ActionResult<PhotographerDto>> Update(int id, UpdatePhotographerDto dto)
     {
+        if (!IsAdmin()) return Forbid();
         var p = await db.Photographers.FindAsync(id);
         if (p is null) return NotFound();
         p.Name = dto.Name;
@@ -47,6 +52,7 @@ public class PhotographersController(AppDbContext db) : ControllerBase
     [HttpDelete("api/photographers/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
+        if (!IsAdmin()) return Forbid();
         var p = await db.Photographers.FindAsync(id);
         if (p is null) return NotFound();
         db.Photographers.Remove(p);

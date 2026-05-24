@@ -1,5 +1,36 @@
 namespace PhotoRating.API.Models;
 
+public class AppUser
+{
+    public int Id { get; set; }
+    public string Username { get; set; } = "";
+    public string DisplayName { get; set; } = "";
+    public string PasswordHash { get; set; } = "";
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public List<Contest> OwnedContests { get; set; } = [];
+    public List<Photographer> PhotographerRoles { get; set; } = [];
+    public List<Judge> JudgeRoles { get; set; } = [];
+    public List<JoinRequest> JoinRequests { get; set; } = [];
+}
+
+public enum JoinRole { Photographer, Judge }
+public enum JoinRequestStatus { Pending, Accepted, Rejected }
+
+public class JoinRequest
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public AppUser User { get; set; } = null!;
+    public int ContestId { get; set; }
+    public Contest Contest { get; set; } = null!;
+    public JoinRole Role { get; set; }
+    public JoinRequestStatus Status { get; set; } = JoinRequestStatus.Pending;
+    public string? Message { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? ReviewedAt { get; set; }
+}
+
 public class Contest
 {
     public int Id { get; set; }
@@ -11,6 +42,8 @@ public class Contest
     public bool IsCompleted { get; set; }
     public bool IsUploadClosed { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int? OwnerId { get; set; }
+    public AppUser? Owner { get; set; }
 
     public List<Photographer> Photographers { get; set; } = [];
     public List<Topic> Topics { get; set; } = [];
@@ -35,6 +68,8 @@ public class Photographer
     public Guid Token { get; set; } = Guid.NewGuid();
     public int ContestId { get; set; }
     public Contest Contest { get; set; } = null!;
+    public int? UserId { get; set; }
+    public AppUser? User { get; set; }
     public List<Photo> Photos { get; set; } = [];
 }
 
@@ -68,6 +103,8 @@ public class Judge
     public Guid Token { get; set; } = Guid.NewGuid();
     public int ContestId { get; set; }
     public Contest Contest { get; set; } = null!;
+    public int? UserId { get; set; }
+    public AppUser? User { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public List<Rating> Ratings { get; set; } = [];
 }
