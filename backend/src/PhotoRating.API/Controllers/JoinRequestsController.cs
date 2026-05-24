@@ -112,6 +112,14 @@ public class JoinRequestsController(AppDbContext db, IConfiguration config) : Co
         if (!IsAdmin() && request.Contest.OwnerId != userId) return Forbid();
         if (request.Status != JoinRequestStatus.Pending) return BadRequest("Request is not pending.");
 
+        if (request.Role == JoinRole.Photographer &&
+            await db.Photographers.AnyAsync(p => p.ContestId == request.ContestId && p.UserId == request.UserId))
+            return Conflict("User is already a photographer in this contest.");
+
+        if (request.Role == JoinRole.Judge &&
+            await db.Judges.AnyAsync(j => j.ContestId == request.ContestId && j.UserId == request.UserId))
+            return Conflict("User is already a judge in this contest.");
+
         request.Status = JoinRequestStatus.Accepted;
         request.ReviewedAt = DateTime.UtcNow;
 
