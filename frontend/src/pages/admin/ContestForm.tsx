@@ -34,6 +34,7 @@ export default function ContestForm({ onSuccess, basePath = '/admin/contests' }:
   const [badges, setBadges] = useState<{ name: string; allowedCount: number }[]>([])
   const [uploadEndDate, setUploadEndDate] = useState('')
   const [ratingEndDate, setRatingEndDate] = useState('')
+  const [isPublic, setIsPublic] = useState(true)
   const [error, setError] = useState('')
 
   const { data: existing } = useQuery({
@@ -50,11 +51,12 @@ export default function ContestForm({ onSuccess, basePath = '/admin/contests' }:
       setBadges(existing.badges.map(b => ({ name: b.name, allowedCount: b.allowedCount })))
       setUploadEndDate(toLocalDateInputValue(existing.uploadEndDate))
       setRatingEndDate(toLocalDateInputValue(existing.ratingEndDate))
+      setIsPublic(existing.isPublic)
     }
   }, [existing])
 
   const create = useMutation({
-    mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[]; badges: { name: string; allowedCount: number }[] }) => api.contests.create(d),
+    mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[]; badges: { name: string; allowedCount: number }[]; isPublic: boolean }) => api.contests.create(d),
     onSuccess: c => {
       qc.invalidateQueries({ queryKey: ['contests'] })
       qc.invalidateQueries({ queryKey: ['dashboard', 'owned'] })
@@ -65,7 +67,7 @@ export default function ContestForm({ onSuccess, basePath = '/admin/contests' }:
   })
 
   const update = useMutation({
-    mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[]; badges: { name: string; allowedCount: number }[] }) => api.contests.update(Number(id), d),
+    mutationFn: (d: { name: string; description: string; uploadEndDate: string; ratingEndDate: string; rewards: string[]; badges: { name: string; allowedCount: number }[]; isPublic: boolean }) => api.contests.update(Number(id), d),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contests'] })
       qc.invalidateQueries({ queryKey: ['dashboard', 'owned'] })
@@ -92,6 +94,7 @@ export default function ContestForm({ onSuccess, basePath = '/admin/contests' }:
       badges: badges.filter(b => b.name.trim().length > 0).map(b => ({ name: b.name.trim(), allowedCount: b.allowedCount })),
       uploadEndDate: toEndOfDay(uploadEndDate),
       ratingEndDate: toEndOfDay(ratingEndDate),
+      isPublic,
     }
     if (isEdit) update.mutate(payload)
     else create.mutate(payload)
@@ -211,6 +214,19 @@ export default function ContestForm({ onSuccess, basePath = '/admin/contests' }:
               onChange={e => setRatingEndDate(e.target.value)}
             />
           </label>
+        </div>
+        <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-gray-700">{isPublic ? 'Public' : 'Private'}</p>
+            <p className="text-xs text-gray-400">{isPublic ? 'Anyone can discover and request to join' : 'Hidden from browse — only admin can add participants'}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsPublic(v => !v)}
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${isPublic ? 'bg-indigo-600' : 'bg-gray-200'}`}
+          >
+            <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${isPublic ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
         </div>
         <button
           type="submit"

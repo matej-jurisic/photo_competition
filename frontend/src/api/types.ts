@@ -7,6 +7,7 @@ export interface Contest {
   ratingEndDate: string
   isCompleted: boolean
   isUploadClosed: boolean
+  isPublic: boolean
   createdAt: string
   ownerId: number | null
 }
@@ -138,6 +139,7 @@ export interface ContestPublic {
   createdAt: string
   isCompleted: boolean
   isUploadClosed: boolean
+  isPublic: boolean
   ownerDisplayName: string | null
   photographerCount: number
   judgeCount: number

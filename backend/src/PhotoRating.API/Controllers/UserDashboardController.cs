@@ -33,7 +33,7 @@ public class UserDashboardController(AppDbContext db) : ControllerBase
             .ToDictionaryAsync(x => x.ContestId, x => x.Count);
 
         var result = contests.Select(c => new OwnedContestSummaryDto(
-            new ContestDto(c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Rewards, c.IsCompleted, c.IsUploadClosed, c.OwnerId),
+            new ContestDto(c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Rewards, c.IsCompleted, c.IsUploadClosed, c.OwnerId, c.IsPublic),
             pendingCounts.GetValueOrDefault(c.Id, 0)
         )).ToList();
 
@@ -51,7 +51,7 @@ public class UserDashboardController(AppDbContext db) : ControllerBase
             .Where(p => p.UserId == userId)
             .Include(p => p.Contest)
             .Select(p => new MyContestEntryDto(
-                new ContestDto(p.Contest.Id, p.Contest.Name, p.Contest.Description, p.Contest.UploadEndDate, p.Contest.RatingEndDate, p.Contest.CreatedAt, p.Contest.Rewards, p.Contest.IsCompleted, p.Contest.IsUploadClosed, p.Contest.OwnerId),
+                new ContestDto(p.Contest.Id, p.Contest.Name, p.Contest.Description, p.Contest.UploadEndDate, p.Contest.RatingEndDate, p.Contest.CreatedAt, p.Contest.Rewards, p.Contest.IsCompleted, p.Contest.IsUploadClosed, p.Contest.OwnerId, p.Contest.IsPublic),
                 JoinRole.Photographer))
             .ToListAsync();
 
@@ -60,7 +60,7 @@ public class UserDashboardController(AppDbContext db) : ControllerBase
             .Where(j => j.UserId == userId)
             .Include(j => j.Contest)
             .Select(j => new MyContestEntryDto(
-                new ContestDto(j.Contest.Id, j.Contest.Name, j.Contest.Description, j.Contest.UploadEndDate, j.Contest.RatingEndDate, j.Contest.CreatedAt, j.Contest.Rewards, j.Contest.IsCompleted, j.Contest.IsUploadClosed, j.Contest.OwnerId),
+                new ContestDto(j.Contest.Id, j.Contest.Name, j.Contest.Description, j.Contest.UploadEndDate, j.Contest.RatingEndDate, j.Contest.CreatedAt, j.Contest.Rewards, j.Contest.IsCompleted, j.Contest.IsUploadClosed, j.Contest.OwnerId, j.Contest.IsPublic),
                 JoinRole.Judge))
             .ToListAsync();
 

@@ -102,6 +102,9 @@ namespace PhotoRating.API.Data.Migrations
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsUploadClosed")
                         .HasColumnType("boolean");
 

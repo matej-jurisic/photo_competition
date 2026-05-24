@@ -26,6 +26,9 @@ public class JoinRequestsController(AppDbContext db, IConfiguration config) : Co
         var contest = await db.Contests.FindAsync(contestId);
         if (contest is null) return NotFound("Contest not found.");
 
+        if (!contest.IsPublic)
+            return BadRequest("This contest is private and does not accept join requests.");
+
         if (contest.IsCompleted || contest.RatingEndDate < DateTime.UtcNow)
             return BadRequest("Contest is already completed.");
 

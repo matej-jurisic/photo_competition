@@ -8,16 +8,17 @@ public record AuthResultDto(string Token, int UserId, string Username, string Di
 // Contest
 public record ContestBadgeDto(int Id, string Name, int AllowedCount);
 public record ContestBadgeInputDto(string Name, int AllowedCount);
-public record CreateContestDto(string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, List<string> Rewards, List<ContestBadgeInputDto> Badges);
-public record UpdateContestDto(string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, List<string> Rewards, List<ContestBadgeInputDto> Badges);
-public record ContestDto(int Id, string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, DateTime CreatedAt, List<string> Rewards, bool IsCompleted, bool IsUploadClosed, int? OwnerId = null);
+public record CreateContestDto(string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, List<string> Rewards, List<ContestBadgeInputDto> Badges, bool IsPublic = true);
+public record UpdateContestDto(string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, List<string> Rewards, List<ContestBadgeInputDto> Badges, bool IsPublic = true);
+public record ContestDto(int Id, string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, DateTime CreatedAt, List<string> Rewards, bool IsCompleted, bool IsUploadClosed, int? OwnerId = null, bool IsPublic = true);
 public record ContestDetailDto(
     int Id, string Name, string? Description, DateTime UploadEndDate, DateTime RatingEndDate, DateTime CreatedAt, List<string> Rewards, bool IsCompleted, bool IsUploadClosed,
     List<PhotographerWithPhotosDto> Photographers,
     List<TopicDto> Topics,
     List<JudgeDto> Judges,
     List<ContestBadgeDto> Badges,
-    int? OwnerId = null);
+    int? OwnerId = null,
+    bool IsPublic = true);
 public record SetCompleteDto(bool IsCompleted);
 public record SetUploadClosedDto(bool IsUploadClosed);
 
@@ -28,7 +29,8 @@ public record ContestPublicDto(
     bool IsCompleted, bool IsUploadClosed,
     string? OwnerDisplayName,
     int PhotographerCount, int JudgeCount,
-    List<TopicDto> Topics);
+    List<TopicDto> Topics,
+    bool IsPublic = true);
 
 // Photographer
 public record CreatePhotographerDto(string Name, string? Bio, int? UserId = null);

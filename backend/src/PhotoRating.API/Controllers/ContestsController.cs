@@ -20,7 +20,7 @@ public class ContestsController(AppDbContext db, IConfiguration config) : Contro
         if (!IsAdmin()) return Forbid();
         return await db.Contests
             .OrderByDescending(c => c.CreatedAt)
-            .Select(c => new ContestDto(c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Rewards, c.IsCompleted, c.IsUploadClosed, c.OwnerId))
+            .Select(c => new ContestDto(c.Id, c.Name, c.Description, c.UploadEndDate, c.RatingEndDate, c.CreatedAt, c.Rewards, c.IsCompleted, c.IsUploadClosed, c.OwnerId, c.IsPublic))
             .ToListAsync();
     }
 
@@ -53,6 +53,7 @@ public class ContestsController(AppDbContext db, IConfiguration config) : Contro
             UploadEndDate = dto.UploadEndDate,
             RatingEndDate = dto.RatingEndDate,
             Rewards = dto.Rewards,
+            IsPublic = dto.IsPublic,
         };
         db.Contests.Add(contest);
         await db.SaveChangesAsync();
@@ -62,7 +63,7 @@ public class ContestsController(AppDbContext db, IConfiguration config) : Contro
         await db.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetById), new { id = contest.Id },
-            new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed, contest.OwnerId));
+            new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed, contest.OwnerId, contest.IsPublic));
     }
 
     [HttpPut("{id}")]
@@ -78,6 +79,7 @@ public class ContestsController(AppDbContext db, IConfiguration config) : Contro
         contest.UploadEndDate = dto.UploadEndDate;
         contest.RatingEndDate = dto.RatingEndDate;
         contest.Rewards = dto.Rewards;
+        contest.IsPublic = dto.IsPublic;
 
         var existingBadges = await db.ContestBadges.Where(b => b.ContestId == id).ToListAsync();
         db.ContestBadges.RemoveRange(existingBadges);
@@ -85,7 +87,7 @@ public class ContestsController(AppDbContext db, IConfiguration config) : Contro
             db.ContestBadges.Add(new ContestBadge { ContestId = id, Name = b.Name, AllowedCount = b.AllowedCount });
 
         await db.SaveChangesAsync();
-        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed, contest.OwnerId);
+        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed, contest.OwnerId, contest.IsPublic);
     }
 
     [HttpPatch("{id}/complete")]
@@ -97,7 +99,7 @@ public class ContestsController(AppDbContext db, IConfiguration config) : Contro
         if (contest is null) return NotFound();
         contest.IsCompleted = dto.IsCompleted;
         await db.SaveChangesAsync();
-        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed, contest.OwnerId);
+        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed, contest.OwnerId, contest.IsPublic);
     }
 
     [HttpPatch("{id}/close-uploads")]
@@ -109,7 +111,7 @@ public class ContestsController(AppDbContext db, IConfiguration config) : Contro
         if (contest is null) return NotFound();
         contest.IsUploadClosed = dto.IsUploadClosed;
         await db.SaveChangesAsync();
-        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed, contest.OwnerId);
+        return new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed, contest.OwnerId, contest.IsPublic);
     }
 
     [HttpDelete("{id}")]
@@ -132,6 +134,7 @@ public class ContestsController(AppDbContext db, IConfiguration config) : Contro
         c.Topics.OrderBy(t => t.OrderIndex).Select(t => new TopicDto(t.Id, t.Name, t.ContestId, t.OrderIndex)).ToList(),
         c.Judges.Select(j => new JudgeDto(j.Id, j.Name, j.Email, j.Token, j.ContestId, j.CreatedAt)).ToList(),
         c.Badges.Select(b => new ContestBadgeDto(b.Id, b.Name, b.AllowedCount)).ToList(),
-        c.OwnerId
+        c.OwnerId,
+        c.IsPublic
     );
 }

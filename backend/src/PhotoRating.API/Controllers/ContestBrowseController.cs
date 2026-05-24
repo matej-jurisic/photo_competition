@@ -14,6 +14,7 @@ public class ContestBrowseController(AppDbContext db) : ControllerBase
     {
         return await db.Contests
             .AsNoTracking()
+            .Where(c => c.IsPublic)
             .Include(c => c.Owner)
             .OrderByDescending(c => c.CreatedAt)
             .Select(c => new ContestPublicDto(
@@ -24,7 +25,8 @@ public class ContestBrowseController(AppDbContext db) : ControllerBase
                 c.Photographers.Count,
                 c.Judges.Count,
                 c.Topics.OrderBy(t => t.OrderIndex)
-                    .Select(t => new TopicDto(t.Id, t.Name, t.ContestId, t.OrderIndex)).ToList()
+                    .Select(t => new TopicDto(t.Id, t.Name, t.ContestId, t.OrderIndex)).ToList(),
+                c.IsPublic
             ))
             .ToListAsync();
     }
@@ -34,12 +36,12 @@ public class ContestBrowseController(AppDbContext db) : ControllerBase
     {
         var result = await db.Contests
             .AsNoTracking()
-            .Where(c => c.Id == id)
+            .Where(c => c.Id == id && c.IsPublic)
             .Select(c => new
             {
                 c.Id, c.Name, c.Description,
                 c.UploadEndDate, c.RatingEndDate, c.CreatedAt,
-                c.IsCompleted, c.IsUploadClosed,
+                c.IsCompleted, c.IsUploadClosed, c.IsPublic,
                 OwnerDisplayName = c.Owner != null ? c.Owner.DisplayName : null,
                 PhotographerCount = c.Photographers.Count,
                 JudgeCount = c.Judges.Count,
@@ -56,7 +58,8 @@ public class ContestBrowseController(AppDbContext db) : ControllerBase
             result.IsCompleted, result.IsUploadClosed,
             result.OwnerDisplayName,
             result.PhotographerCount, result.JudgeCount,
-            result.Topics
+            result.Topics,
+            result.IsPublic
         );
     }
 }
