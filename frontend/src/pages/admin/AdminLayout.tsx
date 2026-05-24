@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { Camera, LogOut } from 'lucide-react'
+import { Camera } from 'lucide-react'
 import { getAdminKey, setAdminKey, clearAdminKey } from '../../api/client'
 
 export default function AdminLayout() {
@@ -74,9 +74,9 @@ export default function AdminLayout() {
         </nav>
         <button
           onClick={handleLogout}
-          className="ml-auto flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800"
+          className="ml-auto text-sm text-gray-500 hover:text-gray-800"
         >
-          <LogOut size={15} /> Exit admin
+          Exit admin
         </button>
       </header>
       <main className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
