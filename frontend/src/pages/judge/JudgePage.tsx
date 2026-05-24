@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
     AlertTriangle,
+    ArrowLeft,
     Award,
     Camera,
     CheckCircle,
@@ -8,7 +9,7 @@ import {
     Star,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { api } from "../../api/client";
 import type { Photo, Topic } from "../../api/types";
@@ -39,6 +40,7 @@ function seededShuffle<T>(arr: T[], seed: string): T[] {
 
 export default function JudgePage() {
     const { token } = useParams<{ token: string }>();
+    const navigate = useNavigate();
     const [ratings, setRatings] = useState<Record<number, LocalRating>>({});
     // photoId -> badgeName (at most one badge per photo, at most 3 total)
     const [badges, setBadges] = useState<Record<number, string>>({});
@@ -178,6 +180,9 @@ export default function JudgePage() {
             <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10">
                 <div className="max-w-5xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
+                        <button onClick={() => navigate(-1)} className="text-gray-400 hover:text-gray-700 mr-1">
+                            <ArrowLeft size={18} />
+                        </button>
                         <Camera className="text-indigo-600" size={22} />
                         <div>
                             <h1 className="font-bold text-gray-900">

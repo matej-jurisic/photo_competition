@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowRight } from 'lucide-react'
 import { api } from '../../api/client'
+import type { Contest, JoinRole } from '../../api/types'
 import { useAuth } from '../../contexts/AuthContext'
 import AppHeader from '../../components/AppHeader'
 
@@ -38,26 +39,46 @@ export default function UserDashboardPage() {
           </p>
         )}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {joined?.map(({ contest: c, role }) => {
+          {Object.values(
+            (joined ?? []).reduce<Record<number, { contest: Contest; roles: JoinRole[] }>>(
+              (acc, { contest: c, role }) => {
+                if (!acc[c.id]) acc[c.id] = { contest: c, roles: [] }
+                acc[c.id].roles.push(role)
+                return acc
+              },
+              {}
+            )
+          ).map(({ contest: c, roles }) => {
             const phase = contestPhaseLabel(c)
-            const href = role === 'Photographer'
-              ? `/my-sessions/photographer/${c.id}`
-              : `/my-sessions/judge/${c.id}`
             return (
-              <Link
-                key={`${c.id}-${role}`}
-                to={href}
-                className="bg-white rounded-xl border border-gray-200 p-4 hover:border-indigo-300 hover:shadow-sm transition-all flex flex-col gap-2"
+              <div
+                key={c.id}
+                className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-2"
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className="font-semibold text-gray-900 text-sm">{c.name}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${phase.cls}`}>{phase.label}</span>
                 </div>
-                <span className="text-xs text-gray-400">Role: {role}</span>
-                <div className="flex items-center gap-1 text-xs text-indigo-600 mt-auto">
-                  Open <ArrowRight size={12} />
+                <div className="flex flex-col gap-1.5 mt-auto">
+                  {roles.map(role => (
+                    <Link
+                      key={role}
+                      to={role === 'Photographer' ? `/my-sessions/photographer/${c.id}` : `/my-sessions/judge/${c.id}`}
+                      className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800"
+                    >
+                      Open as {role} <ArrowRight size={12} />
+                    </Link>
+                  ))}
+                  {c.isCompleted && (
+                    <Link
+                      to={`/results/${c.id}`}
+                      className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800"
+                    >
+                      View results <ArrowRight size={12} />
+                    </Link>
+                  )}
                 </div>
-              </Link>
+              </div>
             )
           })}
         </div>

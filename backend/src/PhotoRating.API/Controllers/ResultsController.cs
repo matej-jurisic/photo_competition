@@ -35,6 +35,10 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
             .Include(p => p.Ratings)
             .ToListAsync();
 
+        var photographersById = contest.Photographers.ToDictionary(p => p.Id);
+        var topicsById = contest.Topics.ToDictionary(t => t.Id);
+        var photosById = photos.ToDictionary(p => p.Id);
+
         var topicResults = contest.Topics
             .OrderBy(t => t.OrderIndex)
             .Select(topic =>
@@ -101,30 +105,29 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
         List<Photographer> tiedPhotographers = [];
         var withRatings = overallScoreDtos.Where(s => s.AverageScore > 0).ToList();
         if (withRatings.Count >= 2 && withRatings[0].AverageScore > withRatings[1].AverageScore)
-            winner = contest.Photographers.First(p => p.Id == withRatings[0].Photographer.Id);
+            winner = photographersById[withRatings[0].Photographer.Id];
         else if (withRatings.Count == 1)
-            winner = contest.Photographers.First(p => p.Id == withRatings[0].Photographer.Id);
+            winner = photographersById[withRatings[0].Photographer.Id];
         else if (withRatings.Count >= 2)
         {
             var topAvg = withRatings[0].AverageScore;
             tiedPhotographers = withRatings
                 .Where(x => x.AverageScore == topAvg)
-                .Select(x => contest.Photographers.First(p => p.Id == x.Photographer.Id))
+                .Select(x => photographersById[x.Photographer.Id])
                 .ToList();
         }
 
-        var photoIds = photos.Select(p => p.Id).ToList();
         var allBadges = await db.Badges
-            .Where(b => photoIds.Contains(b.PhotoId))
+            .Where(b => photosById.Keys.Contains(b.PhotoId))
             .ToListAsync();
 
         var badgedPhotos = allBadges
             .GroupBy(b => b.PhotoId)
             .Select(g =>
             {
-                var photo = photos.First(p => p.Id == g.Key);
-                var photographer = contest.Photographers.First(p => p.Id == photo.PhotographerId);
-                var topic = contest.Topics.First(t => t.Id == photo.TopicId);
+                var photo = photosById[g.Key];
+                var photographer = photographersById[photo.PhotographerId];
+                var topic = topicsById[photo.TopicId];
                 return new BadgedPhotoDto(
                     new PhotoDto(photo.Id, photo.Title, photo.ImageUrl, photo.PhotographerId, photo.TopicId),
                     photographer.Name,
@@ -136,7 +139,8 @@ public class ResultsController(AppDbContext db, IConfiguration config) : Control
 
         var contestDto = new ContestDto(contest.Id, contest.Name, contest.Description, contest.UploadEndDate, contest.RatingEndDate, contest.CreatedAt, contest.Rewards, contest.IsCompleted, contest.IsUploadClosed);
         var winnerDto = winner is null ? null : new PhotographerDto(winner.Id, winner.Name, winner.Bio, winner.ContestId, winner.Token);
-        var winnerScore = winner is null ? (double?)null : overallScoreDtos.First(x => x.Photographer.Id == winner.Id).AverageScore;
+        var overallScoreById = overallScoreDtos.ToDictionary(x => x.Photographer.Id);
+        var winnerScore = winner is null ? (double?)null : overallScoreById[winner.Id].AverageScore;
         var tiedDtos = tiedPhotographers.Select(p => new PhotographerDto(p.Id, p.Name, p.Bio, p.ContestId, p.Token)).ToList();
 
         return new ContestResultsDto(contestDto, topicResults, winnerDto, winnerScore, tiedDtos, badgedPhotos, overallScoreDtos, contest.Judges.Count);

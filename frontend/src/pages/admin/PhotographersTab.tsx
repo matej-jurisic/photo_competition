@@ -2,7 +2,8 @@ import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Trash2, Upload, X, Link, Check } from 'lucide-react'
 import { api } from '../../api/client'
-import type { ContestDetail, Topic } from '../../api/types'
+import type { ContestDetail, Topic, UserSummary } from '../../api/types'
+import UserSearchInput from '../../components/UserSearchInput'
 
 interface Props {
   contestId: number
@@ -13,6 +14,7 @@ export default function PhotographersTab({ contestId, contest }: Props) {
   const qc = useQueryClient()
   const [name, setName] = useState('')
   const [bio, setBio] = useState('')
+  const [linkedUser, setLinkedUser] = useState<UserSummary | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editName, setEditName] = useState('')
   const [editBio, setEditBio] = useState('')
@@ -36,13 +38,25 @@ export default function PhotographersTab({ contestId, contest }: Props) {
 
   const topics = contest.topics
 
+  const [createError, setCreateError] = useState<string | null>(null)
+
   const create = useMutation({
-    mutationFn: () => api.photographers.create(contestId, { name: name.trim(), bio: bio.trim() }),
+    mutationFn: () => api.photographers.create(contestId, {
+      name: linkedUser ? linkedUser.displayName : name.trim(),
+      bio: linkedUser ? '' : bio.trim(),
+      userId: linkedUser?.id,
+    }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['photographers', contestId] })
       qc.invalidateQueries({ queryKey: ['contest', String(contestId)] })
       setName('')
       setBio('')
+      setLinkedUser(null)
+      setCreateError(null)
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: unknown } })?.response?.data
+      setCreateError(typeof msg === 'string' ? msg : 'Failed to add photographer.')
     },
   })
 
@@ -95,27 +109,52 @@ export default function PhotographersTab({ contestId, contest }: Props) {
       {/* Add photographer */}
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Add Photographer</h3>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-          />
-          <input
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Bio (optional)"
-            value={bio}
-            onChange={e => setBio(e.target.value)}
-          />
+        <UserSearchInput
+          selected={linkedUser}
+          onSelect={user => { setLinkedUser(user); setCreateError(null) }}
+          placeholder="Search registered users..."
+        />
+        {linkedUser ? (
           <button
             onClick={() => create.mutate()}
-            disabled={!name.trim() || create.isPending}
-            className="flex items-center justify-center gap-1 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+            disabled={create.isPending}
+            className="mt-2 flex items-center justify-center gap-1 w-full bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
           >
-            <Plus size={14} /> Add
+            <Plus size={14} /> Add {linkedUser.displayName}
           </button>
-        </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 my-3">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-400">or add manually</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+              />
+              <input
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Bio (optional)"
+                value={bio}
+                onChange={e => setBio(e.target.value)}
+              />
+              <button
+                onClick={() => create.mutate()}
+                disabled={!name.trim() || create.isPending}
+                className="flex items-center justify-center gap-1 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+              >
+                <Plus size={14} /> Add
+              </button>
+            </div>
+          </>
+        )}
+        {createError && (
+          <p className="text-xs text-red-600 mt-2">{createError}</p>
+        )}
       </div>
 
       {topics.length === 0 && (

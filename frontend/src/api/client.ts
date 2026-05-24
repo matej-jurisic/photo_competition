@@ -2,7 +2,7 @@ import axios from 'axios'
 import type {
   Contest, ContestDetail, Photographer, PhotographerWithPhotos,
   Topic, Photo, Judge, Rating, Badge, JudgeSession, ContestResults,
-  AuthResult, ContestPublic, JoinRequest, JoinRole, MyContestEntry, OwnedContestSummary
+  AuthResult, ContestPublic, JoinRequest, JoinRole, MyContestEntry, OwnedContestSummary, UserSummary
 } from './types'
 
 const BASE = import.meta.env.VITE_API_URL ?? ''
@@ -16,6 +16,10 @@ export function getAdminKey(): string {
 
 export function setAdminKey(key: string) {
   sessionStorage.setItem('adminKey', key)
+}
+
+export function clearAdminKey() {
+  sessionStorage.removeItem('adminKey')
 }
 
 const adminHeaders = () => ({ 'X-Admin-Key': getAdminKey() })
@@ -80,6 +84,12 @@ export const api = {
       http.get<import('./types').PhotographerSession>(`/api/user-sessions/photographer/${contestId}`, { headers: authHeaders() }).then(r => r.data),
   },
 
+  // ── Admin utilities ──────────────────────────────────────────────────────────
+  admin: {
+    searchUsers: (search: string) =>
+      http.get<UserSummary[]>('/api/admin/users', { params: { search }, headers: adminHeaders() }).then(r => r.data),
+  },
+
   // ── Contests (admin) ─────────────────────────────────────────────────────────
   contests: {
     list: () => http.get<Contest[]>('/api/contests', { headers: adminHeaders() }).then(r => r.data),
@@ -101,7 +111,7 @@ export const api = {
   photographers: {
     list: (contestId: number) =>
       http.get<PhotographerWithPhotos[]>(`/api/contests/${contestId}/photographers`, { headers: { ...adminHeaders(), ...authHeaders() } }).then(r => r.data),
-    create: (contestId: number, data: { name: string; bio: string }) =>
+    create: (contestId: number, data: { name: string; bio: string; userId?: number }) =>
       http.post<Photographer>(`/api/contests/${contestId}/photographers`, data, { headers: { ...adminHeaders(), ...authHeaders() } }).then(r => r.data),
     update: (id: number, data: { name: string; bio: string }) =>
       http.put<Photographer>(`/api/photographers/${id}`, data, { headers: adminHeaders() }).then(r => r.data),
@@ -130,7 +140,7 @@ export const api = {
   judges: {
     list: (contestId: number) =>
       http.get<Judge[]>(`/api/contests/${contestId}/judges`, { headers: { ...adminHeaders(), ...authHeaders() } }).then(r => r.data),
-    create: (contestId: number, data: { name: string; email: string }) =>
+    create: (contestId: number, data: { name: string; email: string; userId?: number }) =>
       http.post<Judge>(`/api/contests/${contestId}/judges`, data, { headers: { ...adminHeaders(), ...authHeaders() } }).then(r => r.data),
     update: (id: number, data: { name: string; email: string }) =>
       http.put<Judge>(`/api/judges/${id}`, data, { headers: adminHeaders() }).then(r => r.data),

@@ -2,11 +2,14 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Trash2, Check, Link, Copy } from 'lucide-react'
 import { api } from '../../api/client'
+import type { UserSummary } from '../../api/types'
+import UserSearchInput from '../../components/UserSearchInput'
 
 export default function JudgesTab({ contestId }: { contestId: number }) {
   const qc = useQueryClient()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [linkedUser, setLinkedUser] = useState<UserSummary | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
@@ -19,9 +22,19 @@ export default function JudgesTab({ contestId }: { contestId: number }) {
     queryFn: () => api.judges.list(contestId),
   })
 
+  const [createError, setCreateError] = useState<string | null>(null)
+
   const create = useMutation({
-    mutationFn: () => api.judges.create(contestId, { name: name.trim(), email: email.trim() }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['judges', contestId] }); setName(''); setEmail('') },
+    mutationFn: () => api.judges.create(contestId, {
+      name: linkedUser ? linkedUser.displayName : name.trim(),
+      email: linkedUser ? '' : email.trim(),
+      userId: linkedUser?.id,
+    }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['judges', contestId] }); setName(''); setEmail(''); setLinkedUser(null); setCreateError(null) },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: unknown } })?.response?.data
+      setCreateError(typeof msg === 'string' ? msg : 'Failed to add judge.')
+    },
   })
 
   const update = useMutation({
@@ -67,28 +80,53 @@ export default function JudgesTab({ contestId }: { contestId: number }) {
     <div className="max-w-2xl space-y-4">
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Add Judge</h3>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-          />
-          <input
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Email (optional)"
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-          />
+        <UserSearchInput
+          selected={linkedUser}
+          onSelect={user => { setLinkedUser(user); setCreateError(null) }}
+          placeholder="Search registered users..."
+        />
+        {linkedUser ? (
           <button
             onClick={() => create.mutate()}
-            disabled={!name.trim() || create.isPending}
-            className="flex items-center justify-center gap-1 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+            disabled={create.isPending}
+            className="mt-2 flex items-center justify-center gap-1 w-full bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
           >
-            <Plus size={14} /> Add
+            <Plus size={14} /> Add {linkedUser.displayName}
           </button>
-        </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 my-3">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-400">or add manually</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+              />
+              <input
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Email (optional)"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+              <button
+                onClick={() => create.mutate()}
+                disabled={!name.trim() || create.isPending}
+                className="flex items-center justify-center gap-1 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+              >
+                <Plus size={14} /> Add
+              </button>
+            </div>
+          </>
+        )}
+        {createError && (
+          <p className="text-xs text-red-600 mt-2">{createError}</p>
+        )}
       </div>
 
       {judges && judges.length > 1 && (

@@ -1,12 +1,18 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { Camera } from 'lucide-react'
-import { getAdminKey, setAdminKey } from '../../api/client'
+import { Camera, LogOut } from 'lucide-react'
+import { getAdminKey, setAdminKey, clearAdminKey } from '../../api/client'
 
 export default function AdminLayout() {
   const [key, setKey] = useState(getAdminKey())
   const [input, setInput] = useState('')
   const [prompted, setPrompted] = useState(false)
+  const navigate = useNavigate()
+
+  function handleLogout() {
+    clearAdminKey()
+    navigate('/contests')
+  }
 
   useEffect(() => {
     if (!key && !prompted) {
@@ -66,6 +72,12 @@ export default function AdminLayout() {
             Contests
           </NavLink>
         </nav>
+        <button
+          onClick={handleLogout}
+          className="ml-auto flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800"
+        >
+          <LogOut size={15} /> Exit admin
+        </button>
       </header>
       <main className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
         <Outlet />

@@ -31,7 +31,9 @@ public class PhotographersController(AppDbContext db, IConfiguration config) : C
     {
         if (!IsAdmin()) return Forbid();
         if (!await db.Contests.AnyAsync(c => c.Id == contestId)) return NotFound();
-        var p = new Photographer { Name = dto.Name, Bio = dto.Bio, ContestId = contestId };
+        if (dto.UserId.HasValue && await db.Photographers.AnyAsync(p => p.ContestId == contestId && p.UserId == dto.UserId))
+            return Conflict("This user is already a photographer in this contest.");
+        var p = new Photographer { Name = dto.Name, Bio = dto.Bio, ContestId = contestId, UserId = dto.UserId };
         db.Photographers.Add(p);
         await db.SaveChangesAsync();
         return new PhotographerDto(p.Id, p.Name, p.Bio, p.ContestId, p.Token);

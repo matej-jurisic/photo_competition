@@ -28,7 +28,9 @@ public class JudgesController(AppDbContext db, IConfiguration config) : Controll
     {
         if (!IsAdmin()) return Forbid();
         if (!await db.Contests.AnyAsync(c => c.Id == contestId)) return NotFound();
-        var judge = new Judge { Name = dto.Name, Email = dto.Email, ContestId = contestId };
+        if (dto.UserId.HasValue && await db.Judges.AnyAsync(j => j.ContestId == contestId && j.UserId == dto.UserId))
+            return Conflict("This user is already a judge in this contest.");
+        var judge = new Judge { Name = dto.Name, Email = dto.Email, ContestId = contestId, UserId = dto.UserId };
         db.Judges.Add(judge);
         await db.SaveChangesAsync();
         return new JudgeDto(judge.Id, judge.Name, judge.Email, judge.Token, judge.ContestId, judge.CreatedAt);

@@ -160,6 +160,12 @@ export interface JoinRequest {
   reviewedAt: string | null
 }
 
+export interface UserSummary {
+  id: number
+  username: string
+  displayName: string
+}
+
 // Dashboard
 export interface MyContestEntry {
   contest: Contest

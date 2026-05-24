@@ -12,16 +12,16 @@ export default function AppHeader() {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-4">
-      <Link to="/contests" className="flex items-center gap-2 mr-2">
+    <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center gap-2 sm:gap-4">
+      <Link to="/contests" className="flex items-center gap-2 mr-1 sm:mr-2 flex-shrink-0">
         <Camera className="text-indigo-600" size={22} />
-        <span className="font-bold text-gray-900 text-lg">Photo Rating</span>
+        <span className="hidden sm:inline font-bold text-gray-900 text-lg">Photo Rating</span>
       </Link>
       <nav className="flex gap-1 flex-1">
         <NavLink
           to="/contests"
           className={({ isActive }) =>
-            `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            `px-2.5 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'
             }`
           }
@@ -32,19 +32,19 @@ export default function AppHeader() {
           <NavLink
             to="/dashboard"
             className={({ isActive }) =>
-              `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              `px-2.5 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'
               }`
             }
           >
-            My Contests
+            My contests
           </NavLink>
         )}
         {!isLoggedIn && (
           <NavLink
             to="/admin"
             className={({ isActive }) =>
-              `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              `px-2.5 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'
               }`
             }
@@ -53,15 +53,17 @@ export default function AppHeader() {
           </NavLink>
         )}
       </nav>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {isLoggedIn ? (
           <>
-            <span className="text-sm text-gray-600">{user!.displayName}</span>
+            <span className="hidden sm:inline text-sm text-gray-600 truncate max-w-[120px]">{user!.displayName}</span>
             <button
               onClick={handleLogout}
+              title="Logout"
               className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800"
             >
-              <LogOut size={15} /> Logout
+              <LogOut size={15} />
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </>
         ) : (

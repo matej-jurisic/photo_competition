@@ -31,7 +31,7 @@ public record ContestPublicDto(
     List<TopicDto> Topics);
 
 // Photographer
-public record CreatePhotographerDto(string Name, string? Bio);
+public record CreatePhotographerDto(string Name, string? Bio, int? UserId = null);
 public record UpdatePhotographerDto(string Name, string? Bio);
 public record PhotographerDto(int Id, string Name, string? Bio, int ContestId, Guid Token);
 public record PhotographerWithPhotosDto(int Id, string Name, string? Bio, int ContestId, Guid Token, List<PhotoDto> Photos);
@@ -48,7 +48,7 @@ public record TopicDto(int Id, string Name, int ContestId, int OrderIndex);
 public record PhotoDto(int Id, string? Title, string ImageUrl, int PhotographerId, int TopicId);
 
 // Judge
-public record CreateJudgeDto(string Name, string? Email);
+public record CreateJudgeDto(string Name, string? Email, int? UserId = null);
 public record UpdateJudgeDto(string Name, string? Email);
 public record JudgeDto(int Id, string Name, string? Email, Guid Token, int ContestId, DateTime CreatedAt);
 
@@ -74,6 +74,9 @@ public record ContestResultsDto(ContestDto Contest, List<TopicResultDto> Topics,
 // Join requests
 public record CreateJoinRequestDto(JoinRole Role, string? Message);
 public record JoinRequestDto(int Id, int ContestId, string ContestName, string RequesterDisplayName, JoinRole Role, JoinRequestStatus Status, string? Message, DateTime CreatedAt, DateTime? ReviewedAt);
+
+// Admin user search
+public record UserSummaryDto(int Id, string Username, string DisplayName);
 
 // Dashboard
 public record MyContestEntryDto(ContestDto Contest, JoinRole Role);

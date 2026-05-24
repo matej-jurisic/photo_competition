@@ -32,25 +32,31 @@ public class ContestBrowseController(AppDbContext db) : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ContestPublicDto>> GetById(int id)
     {
-        var c = await db.Contests
+        var result = await db.Contests
             .AsNoTracking()
-            .Include(c => c.Owner)
-            .Include(c => c.Topics)
-            .FirstOrDefaultAsync(c => c.Id == id);
+            .Where(c => c.Id == id)
+            .Select(c => new
+            {
+                c.Id, c.Name, c.Description,
+                c.UploadEndDate, c.RatingEndDate, c.CreatedAt,
+                c.IsCompleted, c.IsUploadClosed,
+                OwnerDisplayName = c.Owner != null ? c.Owner.DisplayName : null,
+                PhotographerCount = c.Photographers.Count,
+                JudgeCount = c.Judges.Count,
+                Topics = c.Topics.OrderBy(t => t.OrderIndex)
+                    .Select(t => new TopicDto(t.Id, t.Name, t.ContestId, t.OrderIndex)).ToList()
+            })
+            .FirstOrDefaultAsync();
 
-        if (c is null) return NotFound();
-
-        var photographerCount = await db.Photographers.CountAsync(p => p.ContestId == id);
-        var judgeCount = await db.Judges.CountAsync(j => j.ContestId == id);
+        if (result is null) return NotFound();
 
         return new ContestPublicDto(
-            c.Id, c.Name, c.Description,
-            c.UploadEndDate, c.RatingEndDate, c.CreatedAt,
-            c.IsCompleted, c.IsUploadClosed,
-            c.Owner?.DisplayName,
-            photographerCount, judgeCount,
-            c.Topics.OrderBy(t => t.OrderIndex)
-                .Select(t => new TopicDto(t.Id, t.Name, t.ContestId, t.OrderIndex)).ToList()
+            result.Id, result.Name, result.Description,
+            result.UploadEndDate, result.RatingEndDate, result.CreatedAt,
+            result.IsCompleted, result.IsUploadClosed,
+            result.OwnerDisplayName,
+            result.PhotographerCount, result.JudgeCount,
+            result.Topics
         );
     }
 }

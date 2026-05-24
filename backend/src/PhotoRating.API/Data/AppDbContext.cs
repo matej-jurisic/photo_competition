@@ -95,5 +95,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         model.Entity<JoinRequest>()
             .HasIndex(r => new { r.UserId, r.ContestId, r.Role })
             .IsUnique();
+
     }
 }

@@ -16,7 +16,7 @@ import {
     X,
 } from "lucide-react";
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { api } from "../../api/client";
 import type { BadgedPhoto, Photo, PhotographerScore } from "../../api/types";
@@ -228,6 +228,7 @@ function Lightbox({ photo, onClose }: { photo: Photo; onClose: () => void }) {
 
 export default function ResultsPage() {
     const { contestId } = useParams<{ contestId: string }>();
+    const navigate = useNavigate();
     const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
 
     const {
@@ -281,12 +282,12 @@ export default function ResultsPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-4xl mx-auto px-6 py-8">
-                <Link
-                    to="/admin"
+                <button
+                    onClick={() => navigate(-1)}
                     className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-6"
                 >
-                    <ArrowLeft size={16} /> Admin
-                </Link>
+                    <ArrowLeft size={16} /> Back
+                </button>
 
                 <div className="flex items-center gap-3 mb-8">
                     <Trophy className="text-amber-500" size={28} />
