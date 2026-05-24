@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Pencil, Users, Image, Tag, CheckCircle, Lock, Bell, Check, X, MoreVertical, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Pencil, Users, Image, Tag, CheckCircle, Lock, Bell, Check, X, MoreVertical } from 'lucide-react'
 import { api } from '../../api/client'
 import PhotographersTab from './PhotographersTab'
 import TopicsTab from './TopicsTab'
@@ -186,7 +186,13 @@ export default function ContestDetail() {
             Uploads until {new Date(contest.uploadEndDate).toLocaleDateString('en-GB')} · Ratings until {new Date(contest.ratingEndDate).toLocaleDateString('en-GB')}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
+          <Link
+            to={`/results/${contestId}`}
+            className="sm:hidden text-sm text-indigo-600 hover:underline"
+          >
+            View Results
+          </Link>
           {/* Desktop actions */}
           <div className="hidden sm:flex items-center gap-2 flex-wrap">
             <Link
@@ -241,12 +247,6 @@ export default function ContestDetail() {
 
           {/* Mobile dropdown */}
           <ActionsMenu>
-            <Link
-              to={`/results/${contestId}`}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-indigo-600 hover:bg-gray-50"
-            >
-              <ExternalLink size={14} /> View Results
-            </Link>
             {!contest.isCompleted && !uploadEnded && (
               contest.isUploadClosed ? (
                 <button
