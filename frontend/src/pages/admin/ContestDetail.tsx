@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Pencil, Users, Image, Tag, CheckCircle, Lock, Bell, Check, X } from 'lucide-react'
+import { ArrowLeft, Pencil, Users, Image, Tag, CheckCircle, Lock, Bell, Check, X, MoreVertical, ExternalLink } from 'lucide-react'
 import { api } from '../../api/client'
 import PhotographersTab from './PhotographersTab'
 import TopicsTab from './TopicsTab'
@@ -76,6 +76,35 @@ function JoinRequestsTab({ contestId }: { contestId: number }) {
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+function ActionsMenu({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="sm:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+      >
+        <MoreVertical size={16} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-10 z-20 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-40 flex flex-col">
+          {children}
+        </div>
+      )}
     </div>
   )
 }
@@ -157,55 +186,110 @@ export default function ContestDetail() {
             Uploads until {new Date(contest.uploadEndDate).toLocaleDateString('en-GB')} · Ratings until {new Date(contest.ratingEndDate).toLocaleDateString('en-GB')}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-          <Link
-            to={`/results/${contestId}`}
-            className="text-sm text-indigo-600 hover:underline"
-          >
-            View Results
-          </Link>
-          {!contest.isCompleted && !uploadEnded && (
-            contest.isUploadClosed ? (
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Desktop actions */}
+          <div className="hidden sm:flex items-center gap-2 flex-wrap">
+            <Link
+              to={`/results/${contestId}`}
+              className="text-sm text-indigo-600 hover:underline"
+            >
+              View Results
+            </Link>
+            {!contest.isCompleted && !uploadEnded && (
+              contest.isUploadClosed ? (
+                <button
+                  onClick={() => setUploadClosed.mutate(false)}
+                  disabled={setUploadClosed.isPending}
+                  className="flex items-center gap-1.5 border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Reopen Uploads
+                </button>
+              ) : (
+                <button
+                  onClick={() => { if (confirm('Close uploads early? Photographers will no longer be able to upload, and judging will open immediately.')) setUploadClosed.mutate(true) }}
+                  disabled={setUploadClosed.isPending}
+                  className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <Lock size={14} /> Close Uploads
+                </button>
+              )
+            )}
+            {contest.isCompleted ? (
               <button
-                onClick={() => setUploadClosed.mutate(false)}
-                disabled={setUploadClosed.isPending}
+                onClick={() => { if (confirm('Reopen this contest for further ratings?')) setComplete.mutate(false) }}
+                disabled={setComplete.isPending}
                 className="flex items-center gap-1.5 border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
               >
-                Reopen Uploads
+                Reopen
               </button>
             ) : (
               <button
-                onClick={() => { if (confirm('Close uploads early? Photographers will no longer be able to upload, and judging will open immediately.')) setUploadClosed.mutate(true) }}
-                disabled={setUploadClosed.isPending}
+                onClick={() => { if (confirm('Mark this contest as completed? Results will become public and ratings will be locked.')) setComplete.mutate(true) }}
+                disabled={setComplete.isPending}
                 className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
               >
-                <Lock size={14} /> Close Uploads
+                <CheckCircle size={14} /> Complete
               </button>
-            )
-          )}
-          {contest.isCompleted ? (
-            <button
-              onClick={() => { if (confirm('Reopen this contest for further ratings?')) setComplete.mutate(false) }}
-              disabled={setComplete.isPending}
-              className="flex items-center gap-1.5 border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+            )}
+            <Link
+              to={`/admin/contests/${id}/edit`}
+              className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50"
             >
-              Reopen
-            </button>
-          ) : (
-            <button
-              onClick={() => { if (confirm('Mark this contest as completed? Results will become public and ratings will be locked.')) setComplete.mutate(true) }}
-              disabled={setComplete.isPending}
-              className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+              <Pencil size={14} /> Edit
+            </Link>
+          </div>
+
+          {/* Mobile dropdown */}
+          <ActionsMenu>
+            <Link
+              to={`/results/${contestId}`}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-indigo-600 hover:bg-gray-50"
             >
-              <CheckCircle size={14} /> Complete
-            </button>
-          )}
-          <Link
-            to={`/admin/contests/${id}/edit`}
-            className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50"
-          >
-            <Pencil size={14} /> Edit
-          </Link>
+              <ExternalLink size={14} /> View Results
+            </Link>
+            {!contest.isCompleted && !uploadEnded && (
+              contest.isUploadClosed ? (
+                <button
+                  onClick={() => setUploadClosed.mutate(false)}
+                  disabled={setUploadClosed.isPending}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Reopen Uploads
+                </button>
+              ) : (
+                <button
+                  onClick={() => { if (confirm('Close uploads early? Photographers will no longer be able to upload, and judging will open immediately.')) setUploadClosed.mutate(true) }}
+                  disabled={setUploadClosed.isPending}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <Lock size={14} /> Close Uploads
+                </button>
+              )
+            )}
+            {contest.isCompleted ? (
+              <button
+                onClick={() => { if (confirm('Reopen this contest for further ratings?')) setComplete.mutate(false) }}
+                disabled={setComplete.isPending}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Reopen
+              </button>
+            ) : (
+              <button
+                onClick={() => { if (confirm('Mark this contest as completed? Results will become public and ratings will be locked.')) setComplete.mutate(true) }}
+                disabled={setComplete.isPending}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                <CheckCircle size={14} /> Complete
+              </button>
+            )}
+            <Link
+              to={`/admin/contests/${id}/edit`}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+            >
+              <Pencil size={14} /> Edit
+            </Link>
+          </ActionsMenu>
         </div>
       </div>
 
